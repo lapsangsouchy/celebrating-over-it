@@ -1,13 +1,17 @@
 /* Level.js */
+
 export class Level {
-  constructor(p, playW) {
+  constructor(p, playW, gutterX) {
     this.p = p;
     this.playW = playW;
+    this.gutterX = gutterX;
     this.platforms = [];
   }
 
   /* ---------- helpers you already know ---------- */
-  addPlatform(x, y, w, h = 12) {
+  addPlatform(tempX, y, w, h = 12) {
+    console.log(this.gutterX);
+    let x = this.gutterX + tempX;
     this.platforms.push({ x, y, w, h });
   }
 

@@ -1,4 +1,5 @@
 import { LIFT_SPEED, DROP_SPEED, SCREEN_GAP } from './constants.js';
+import { WORLD } from './viewport.js';
 
 export class Camera {
   constructor(p, player, gutterX = 0) {
@@ -10,7 +11,7 @@ export class Camera {
 
   update() {
     const p = this.p;
-    const midY = p.height * SCREEN_GAP; // halfway line
+    const midY = WORLD.h * SCREEN_GAP; // WORLD.h = 450 by default
     const playerY = this.player.pos.y - this.camY; // player in screen coords
     const desired = this.player.pos.y - midY; // camY if centred
 
@@ -26,7 +27,7 @@ export class Camera {
   /* call at top of draw(): push & translate world */
   begin() {
     this.p.push();
-    this.p.translate(this.gutterX, -this.camY);
+    this.p.translate(0, -this.camY);
   }
 
   /* call after world draw, before UI: pop back */

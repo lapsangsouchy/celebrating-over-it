@@ -1,4 +1,5 @@
 import { GRAVITY, FRICTION, MIN_LEN, MAX_LEN } from './constants.js';
+import * as viewport from './viewport.js';
 
 export class Player {
   constructor(p, level, getCamY, getGutter) {
@@ -44,9 +45,10 @@ export class Player {
 
   /* ---------- mouse world helpers ---------- */
   getMouseWorld() {
+    const v = viewport.screenToWorld(this.p.mouseX, this.p.mouseY);
     return this.p.createVector(
-      this.p.mouseX - this.getGutter(), // we’ll pass gutterX in a sec
-      this.p.mouseY + this.getCamY() // pass camera or camY too
+      v.x,
+      v.y + this.getCamY() // pass camera or camY too
     );
   }
 
@@ -73,6 +75,9 @@ export class Player {
 
     // collisions
     this.level.platforms.forEach((r) => this.collideRect(r));
+
+    // finally, stop at the gutters
+    this.constrainToLane();
   }
 
   draw() {
@@ -146,6 +151,22 @@ export class Player {
       this.pos.add(delta);
       if (!this.latched && delta.y < 0) this.vel.y = 0; // landed on top
       else this.vel.add(delta); // slide
+    }
+  }
+
+  /* ---------- keep inside play lane ---------- */
+  constrainToLane() {
+    // half-width of the circle so the edge hits the walls
+    const half = this.r;
+    const left = this.getGutter() + half;
+    const right = viewport.WORLD.w - this.getGutter() - half;
+
+    if (this.pos.x < left) {
+      this.pos.x = left;
+      if (this.vel.x < 0) this.vel.x = 0; // stop if moving left
+    } else if (this.pos.x > right) {
+      this.pos.x = right;
+      if (this.vel.x > 0) this.vel.x = 0; // stop if moving right
     }
   }
 

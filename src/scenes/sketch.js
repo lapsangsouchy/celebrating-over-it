@@ -46,6 +46,24 @@ const TUTORIAL_STEPS = [
 ];
 let tutorial = { active: false, step: 0, alpha: 255, text: '' };
 
+/* ---------- Story Layer ----------------------------------------- */
+const STORY_MARKERS = [
+  //  y-values are world-space.  Positive = below ground, negative = above.
+  { y: GROUND_Y - 80, msg: (n) => `${n} began to get the hang of things…` },
+  { y: -128, msg: (n) => `Until there was a place ${n} couldn't reach...` },
+  {
+    y: -512,
+    msg: (n) => `${n} felt like they could make it further than before.`,
+  },
+  { y: -1024, msg: (n) => `Clouds parted; the summit still loomed.` },
+];
+let storySeen = new Set(); // remembers which markers are done
+
+// transient pop-ups (fail-states, upgrades, etc.)
+let storyPopup = { txt: '', alpha: 0 }; // alpha==0 → idle
+
+/* ---------- Start of p5.js Implementation --------------------------- */
+
 new p5((p) => {
   /* game objects */
   let player, camera, level;
@@ -273,6 +291,7 @@ new p5((p) => {
       player.update();
 
       updateTutorial(); // update tutorial state
+      updateStory(); // update story markers
 
       /* ---------- Fail-State progression ---------- */
       if (failIndex < FAIL_STATES.length) {
@@ -298,16 +317,18 @@ new p5((p) => {
       /* ---------- UI toast ---------- */
       if (msgTimer > 0) {
         const fs = FAIL_STATES[failIndex - 1]; // the one we just unlocked
-        drawCenteredToast(
-          fs.message(playerName),
-          255 * (msgTimer / MSG_TIME_FRAMES)
-        );
+        // drawCenteredToast(
+        //   fs.message(playerName),
+        //   255 * (msgTimer / MSG_TIME_FRAMES)
+        // );
+        storyPop(fs.message(playerName));
         msgTimer--;
       }
 
       player.draw();
 
       drawTutorial(); // show tutorial text
+      drawStory(); // show story popups
 
       camera.end();
       viewport.end(p); // pop
@@ -417,19 +438,19 @@ new p5((p) => {
     level.addPlatform(384, -640, 64, 32, 64, false, 'tinyGrass');
   }
 
-  function drawCenteredToast(txt, alpha = 255) {
-    const txtOffset = player.r + 20; // offset below player
+  // function drawCenteredToast(txt, alpha = 255) {
+  //   const txtOffset = player.r + 20; // offset below player
 
-    p.push();
-    p.textAlign(p.CENTER, p.TOP);
-    p.textFont('monospace');
-    p.textSize(18);
-    p.fill(255, alpha);
-    p.stroke(0, alpha);
-    p.strokeWeight(4);
-    p.text(txt, p.width / 3, player.pos.y + txtOffset);
-    p.pop();
-  }
+  //   p.push();
+  //   p.textAlign(p.CENTER, p.TOP);
+  //   p.textFont('monospace');
+  //   p.textSize(18);
+  //   p.fill(255, alpha);
+  //   p.stroke(0, alpha);
+  //   p.strokeWeight(4);
+  //   p.text(txt, p.width / 3, player.pos.y + txtOffset);
+  //   p.pop();
+  // }
 
   function resetGame() {
     camera.reset();
@@ -599,6 +620,51 @@ new p5((p) => {
     // keep it near the player so it scrolls with the camera
     p.text(tutorial.text, viewport.WORLD.w / 2, player.pos.y - player.r - 60);
     p.pop();
+  }
+
+  /* ---------- story functions ---------- */
+  function updateStory() {
+    // skip story if tutorial already seen
+    if (!localStorage.getItem(TUT_KEY)) return;
+
+    // HEIGHT-TRIGGERED CAPTIONS ──────────────────────────────────
+    for (const m of STORY_MARKERS) {
+      if (!storySeen.has(m) && player.pos.y <= m.y) {
+        storyPopup.txt = m.msg(playerName);
+        storyPopup.alpha = 255; // full opacity
+        storySeen.add(m);
+        break; // one at a time
+      }
+    }
+
+    // FADE-OUT for the active popup
+    if (storyPopup.alpha > 0) {
+      storyPopup.alpha -= 1; // ≈ 85 frames →  ~1.4 s
+    }
+  }
+
+  function drawStory() {
+    if (storyPopup.alpha <= 0) return;
+
+    const txtOffset = player.r + 40; // a bit under the player
+    p.push();
+    p.textAlign(p.CENTER, p.TOP);
+    p.textFont('monospace');
+    p.textSize(18);
+    p.fill(255, storyPopup.alpha);
+    p.stroke(0, storyPopup.alpha);
+    p.strokeWeight(4);
+    p.text(
+      storyPopup.txt,
+      p.width / 3, // roughly lane-centre
+      player.pos.y + txtOffset
+    ); // world coords → scrolls w/ cam
+    p.pop();
+  }
+
+  /* use this from anywhere (fail-state unlock, upgrades, etc.) */
+  function storyPop(txt) {
+    storyPopup = { txt, alpha: 255 };
   }
 
   window.p = p;

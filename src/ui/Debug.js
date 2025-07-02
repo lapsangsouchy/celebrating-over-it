@@ -1,33 +1,34 @@
+import { GRID_UNIT, MAX_LEN } from '../core/config.js';
 import * as viewport from './viewport.js';
-
-const DEBUG_KEY = 'myGameDebug';
-const saved = JSON.parse(localStorage.getItem(DEBUG_KEY)) || {};
 
 //--------------------------------------------------------------
 // GLOBAL DEBUG STATE OBJECT
 //--------------------------------------------------------------
 
 export const Debug = {
-  active: saved.showGrid ?? true, // master flag
-  showGrid: saved.showGrid ?? true, // draw coordinate grid
+  active: false, // master flag
+  showGrid: false, // draw coordinate grid
   freeMove: false, // arrow‑key teleport
-  gridSize: 100, // px between grid lines
+  gridSize: GRID_UNIT, // px between grid lines
   physics: {
     gravity: true,
     friction: true,
   },
   world: {
-    bounds: true, // draw world bounds
+    bounds: false, // draw world bounds
     lanes: true, // draw lane bounds
   },
+  brush: false,
+  snap: GRID_UNIT, // snap to grid size
+  longArm: false,
+  showBoxes: false,
 };
 
 //--------------------------------------------------------------
 // HOT‑KEY HANDLER (call from keyPressed())
 //--------------------------------------------------------------
 
-export function handleDebugKeyPress(e) {
-  console.log(e.key);
+export function handleDebugKeyPress(e, player) {
   switch (e.key) {
     case '`': // back‑tick toggles master flag
       Debug.active = !Debug.active;
@@ -41,6 +42,20 @@ export function handleDebugKeyPress(e) {
     case 'f':
     case 'F':
       if (Debug.active) Debug.freeMove = !Debug.freeMove;
+      break;
+    case 'b':
+      if (Debug.active) Debug.brush = !Debug.brush;
+      break;
+    case 'l':
+    case 'L':
+      if (Debug.active) Debug.longArm = !Debug.longArm;
+      player.setMaxRopeLength(Debug.longArm ? 240 : MAX_LEN);
+      console.log('Long arm:', Debug.longArm ? 'ON (240)' : 'OFF (170)');
+      break;
+    case 'h':
+    case 'H':
+      if (Debug.active) Debug.showBoxes = !Debug.showBoxes;
+      console.log('Show boxes:', Debug.showBoxes ? 'ON' : 'OFF');
       break;
     case '1':
       if (Debug.active) Debug.physics.gravity = !Debug.physics.gravity;
@@ -76,51 +91,49 @@ export function debugPreUpdate(player) {
 //--------------------------------------------------------------
 // POST‑DRAW  (call once each frame AFTER your normal drawing)
 //--------------------------------------------------------------
-export function drawGrid(p, cam) {
+export function drawGrid(p, cam, spacing = Debug.snap) {
   if (!(Debug.active && Debug.showGrid)) return;
 
-  p.push();
-  p.stroke(160);
-  p.fill(255, 0, 0);
-
-  const gs = Debug.gridSize;
   // 1. Visible world rectangle this frame
   const s = viewport.s; // uniform scale
   const off = viewport.off; // letter-box translate (world units)
   const viewW = p.width / s; // width & height in world coords
   const viewH = p.height / s;
-  const leftX = off.x; // world X at left edge
+  const leftX = -off.x; // world X at left edge
   const rightX = leftX + viewW;
   const topY = cam.camY - off.y; // world Y at top edge
   const botY = topY + viewH;
 
   // 2. Align to grid
-  const firstX = Math.floor(leftX / gs) * gs;
-  const firstY = Math.floor(topY / gs) * gs;
+  const firstX = Math.floor(leftX / spacing) * spacing;
+  const firstY = Math.floor(topY / spacing) * spacing;
 
-  const big = gs * 4;
+  const big = spacing * 5; // bold every 5th line
+
+  p.push();
+  p.noFill();
 
   // vertical lines
-  for (let x = firstX; x <= rightX; x += gs) {
-    p.stroke(x % big ? 80 : 130);
+  for (let x = firstX; x <= rightX; x += spacing) {
+    p.stroke(x % big ? 70 : 120);
     p.line(x, topY, x, botY);
-    if (x % big === 0) {
-      p.fill(160);
+    if ((x % GRID_UNIT) % 4 === 0) {
+      p.fill(0);
       p.noStroke();
       p.textSize(12);
-      p.text(x, x + 2, topY + 12); // label near top edge
+      p.text(x, x + 2, topY + 14); // label near top edge
     }
   }
 
   // horizontal lines
-  for (let y = firstY; y <= botY; y += gs) {
-    p.stroke(y % big ? 80 : 130);
+  for (let y = firstY; y <= botY; y += GRID_UNIT) {
+    p.stroke(y % big ? 70 : 120);
     p.line(leftX, y, rightX, y);
-    if (y % big === 0) {
-      p.fill(160);
+    if ((y / GRID_UNIT) % 4 === 0) {
+      p.fill(0);
       p.noStroke();
       p.textSize(12);
-      p.text(y, leftX + 2, y - 2);
+      p.text(y, leftX + 4, y - 4);
     }
   }
   // p.pop();
@@ -134,7 +147,6 @@ export function drawGrid(p, cam) {
 // Helper to toggle grid on/off
 export function toggleGrid() {
   Debug.showGrid = !Debug.showGrid;
-  localStorage.setItem(DEBUG_KEY, JSON.stringify(Debug));
 }
 
 export function drawWorldBounds(p) {
@@ -146,11 +158,22 @@ export function drawWorldBounds(p) {
   p.pop();
 }
 
-export function drawLaneBounds(p, gutterX, playW) {
+export function drawLaneBounds(p, playW) {
   p.push();
   p.noFill();
   p.stroke(0, 180, 255); // cyan
   p.strokeWeight(3);
-  p.rect(gutterX, -10000, playW, 20000); // crazy-tall so it spans whole level
+  p.rect(0, -10000, playW, 20000); // crazy-tall so it spans whole level
+  p.pop();
+}
+
+export function drawHitboxes(p, level) {
+  p.push();
+  p.fill(0, 255, 255, 50);
+  p.strokeWeight(6);
+  p.stroke(0, 255, 255, 50);
+  for (const r of level.platforms) {
+    p.rect(r.x, r.y, r.w, r.hHit);
+  }
   p.pop();
 }

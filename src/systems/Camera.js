@@ -1,11 +1,10 @@
-import { LIFT_SPEED, DROP_SPEED, SCREEN_GAP } from './constants.js';
-import { WORLD } from './viewport.js';
+import { LIFT_SPEED, DROP_SPEED, SCREEN_GAP } from '../core/config.js';
+import { WORLD } from '../ui/viewport.js';
 
 export class Camera {
-  constructor(p, player, gutterX = 0) {
+  constructor(p, player) {
     this.p = p;
     this.player = player;
-    this.gutterX = gutterX; // left margin for centred lane
     this.camY = 0;
   }
 
@@ -33,11 +32,6 @@ export class Camera {
   /* call after world draw, before UI: pop back */
   end() {
     this.p.pop();
-  }
-
-  /* when window resizes and lane re-centers */
-  setGutter(x) {
-    this.gutterX = x;
   }
 
   /* reset on game restart */

@@ -5,7 +5,7 @@ export let off = { x: 0, y: 0 }; // letter-box offsets
 
 export function update() {
   s = Math.min(p.windowWidth / WORLD.w, p.windowHeight / WORLD.h);
-  off.x = (p.windowWidth / s - WORLD.w) * 0.5; // world units
+  off.x = 0; // world units
   off.y = (p.windowHeight / s - WORLD.h) * 0.5;
 }
 

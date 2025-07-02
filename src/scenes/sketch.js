@@ -5,7 +5,12 @@ import { Camera } from '../systems/Camera.js';
 import { Level } from '../systems/Level.js';
 import { TILES } from '../entities/Tiles.js';
 
-import { GROUND_Y, CLIFF_W, MSG_TIME_FRAMES } from '../core/config.js';
+import {
+  GROUND_Y,
+  CLIFF_W,
+  MSG_TIME_FRAMES,
+  FAIL_STATES,
+} from '../core/config.js';
 import { buildCliffStone } from '../systems/Cliff.js';
 
 import {
@@ -27,6 +32,19 @@ const STATE_NAME = 'name'; // enter your name
 const STATE_PLAY = 'playing'; // normal gameplay
 
 let gameState = STATE_INTRO;
+
+/* ---------- One-time tutorial ------------------------------------ */
+const TUT_KEY = 'advTutSeen'; // localStorage flag
+const TUTORIAL_STEPS = [
+  (name) =>
+    `${name} saw the mountain and used\n` +
+    'their mouse / trackpad to reach and click + hold a surface.',
+  (name) =>
+    `While holding, ${name} found that\n` +
+    `by dragging their mouse/trackpad they could move.`,
+  (name) => `${name} started climbing!`,
+];
+let tutorial = { active: false, step: 0, alpha: 255, text: '' };
 
 new p5((p) => {
   /* game objects */
@@ -62,49 +80,15 @@ new p5((p) => {
   const getBrushKind = () => brushKinds[brushIndex];
   let atlas;
 
+  /* ---------- Cookie reset helpers ---------------------------------------- */
+  let btnResetCookies = null; // DOM button handle
+  const SAVE_KEYS = ['advName', 'advFace', 'advTutSeen']; // add more later
+
   /* ---------- p5.js preload ---------- */
 
   p.preload = () => {
     atlas = p.loadImage(new URL('../assets/tilemap.png', import.meta.url).href);
   };
-
-  /* ---------- Fail-State progression --------------------------------- */
-  /* Each object = one upgrade in story order. */
-  const FAIL_STATES = [
-    {
-      // 0 ► Long Arm
-      name: 'longArm',
-      checkpointY: 0, // stand here first…
-      topBoundY: -256, // …then climb above this OR
-      bottomBoundY: 128, //    fall below this to trigger
-      message:
-        `But then ${playerName} learned to reach further the next time!\n` +
-        `${playerName} unlocked LONG ARM!`,
-      unlock: (player) => player.unlockLongArm(240), // call on trigger
-    },
-    {
-      // 1 ► Movement+Jump   (todo)
-      name: 'moveBoost',
-      checkpointY: -800, // placeholder numbers
-      topBoundY: -1056,
-      bottomBoundY: -544,
-      message: 'TODO: you can jump farther!',
-      unlock: (player) => {
-        /* add later */
-      },
-    },
-    {
-      // 2 ► Attack          (todo)
-      name: 'attackUpgrade',
-      checkpointY: -1600,
-      topBoundY: -1856,
-      bottomBoundY: -1344,
-      message: 'TODO: Alex can now smash obstacles!',
-      unlock: (player) => {
-        /* add later */
-      },
-    },
-  ];
 
   /* ---------- p5.js setup ---------- */
   p.setup = () => {
@@ -112,14 +96,28 @@ new p5((p) => {
     p.imageSmoothingEnabled = false; // crisp pixel-art
 
     let savedName = localStorage.getItem('advName');
-    // let savedFace = localStorage.getItem('advFace'); // Data URL
+    let savedFace = localStorage.getItem('advFace'); // Data URL
 
     if (savedName) {
       // player.setFace(p.loadImage(savedFace));
       playerName = savedName;
+      if (savedFace) {
+        p.loadImage(savedFace, (img) => {
+          player.setFace(img);
+        });
+      }
       gameState = STATE_PLAY; // skip intro
     } else {
       gameState = STATE_INTRO; // start with intro
+    }
+
+    if (gameState === STATE_PLAY && !localStorage.getItem(TUT_KEY)) {
+      tutorial = {
+        active: true,
+        step: 0,
+        alpha: 255,
+        text: TUTORIAL_STEPS[0](playerName),
+      };
     }
 
     /* ---------- slice everything declared in TILES ---------- */
@@ -169,7 +167,8 @@ new p5((p) => {
       btnSkip.mousePressed(() => {
         btnYes.remove();
         btnSkip.remove();
-        gameState = STATE_PLAY; // straight into the game
+        gotoNameScreen(); // skip to name screen
+        // gameState = STATE_PLAY; // straight into the game
       });
     }
 
@@ -273,6 +272,8 @@ new p5((p) => {
       level.draw();
       player.update();
 
+      updateTutorial(); // update tutorial state
+
       /* ---------- Fail-State progression ---------- */
       if (failIndex < FAIL_STATES.length) {
         const fs = FAIL_STATES[failIndex];
@@ -297,11 +298,16 @@ new p5((p) => {
       /* ---------- UI toast ---------- */
       if (msgTimer > 0) {
         const fs = FAIL_STATES[failIndex - 1]; // the one we just unlocked
-        drawCenteredToast(fs.message, 255 * (msgTimer / MSG_TIME_FRAMES));
+        drawCenteredToast(
+          fs.message(playerName),
+          255 * (msgTimer / MSG_TIME_FRAMES)
+        );
         msgTimer--;
       }
 
       player.draw();
+
+      drawTutorial(); // show tutorial text
 
       camera.end();
       viewport.end(p); // pop
@@ -312,14 +318,30 @@ new p5((p) => {
         p.fill('#130022'); // same dark purple
         p.rect(worldRightScreenX, 0, p.width - worldRightScreenX, p.height);
       }
+      debugOverlay(); // show / hide the Reset-Cookies button
     }
-    // // fall fail‑safe
-    // if (player.pos.y - player.r > level.platforms[0].y + level.platforms[0].h) {
-    //   // player is below the ground
-    //   resetGame();
-    // }
-    // console.log(viewport.screenToWorld(p.mouseX, p.mouseY));
   };
+
+  /* ---------- Debug UI overlay ------------------------------------ */
+  function debugOverlay() {
+    if (Debug.active) {
+      // create once
+      if (!btnResetCookies) {
+        btnResetCookies = p.createButton('⚠︎ Reset Cookies');
+        btnResetCookies.position(12, 10); // fixed-pixel HUD position
+        btnResetCookies.style('font-family', 'monospace');
+        btnResetCookies.mousePressed(() => {
+          SAVE_KEYS.forEach((k) => localStorage.removeItem(k));
+          console.log('Local storage cleared — reloading…');
+          window.location.reload(); // hard reset
+        });
+      }
+    } else if (btnResetCookies) {
+      // tidy up when Debug toggles off
+      btnResetCookies.remove();
+      btnResetCookies = null;
+    }
+  }
 
   /* ---------- input/handlers ---------- */
   p.mousePressed = () => {
@@ -508,17 +530,24 @@ new p5((p) => {
     ok.position(p.width / 2 - 30, p.height / 2 + 200);
 
     ok.mousePressed(() => {
-      const name = input.value().trim() || 'You';
+      const name = input.value().trim() || 'you';
       playerName = name;
       localStorage.setItem('advName', name);
-
-      if (faceSnap) {
-        localStorage.setItem('advFace', faceSnap.canvas.toDataURL());
-      }
       prompt.remove();
       input.remove();
       ok.remove();
       p.imageMode(p.CORNER); // reset image mode
+
+      /* ---------- Tutorial start ---------- */
+      const seenTut = localStorage.getItem(TUT_KEY);
+      if (!seenTut) {
+        tutorial.active = true; // start the tutorial
+        tutorial.step = 0;
+        tutorial.text = TUTORIAL_STEPS[tutorial.step](playerName);
+        tutorial.alpha = 255; // fade in
+      }
+
+      /* ---------- start the game! ---------- */
       gameState = STATE_PLAY;
     });
   }
@@ -530,6 +559,46 @@ new p5((p) => {
     b.position(x, y);
     b.size(160, 32);
     b.style('font-family', 'monospace');
+  }
+
+  /* ---------- tutorial functions ---------- */
+  function updateTutorial() {
+    if (!tutorial.active) return;
+
+    // STEP-0 ▸ wait for the first successful latch
+    if (tutorial.step === 0 && player.latched) {
+      tutorial.step = 1;
+      tutorial.text = TUTORIAL_STEPS[1](playerName);
+      tutorial.alpha = 255;
+    }
+    // STEP-1 ▸ wait for the first release
+    else if (tutorial.step === 1 && !player.latched && !p.mouseIsPressed) {
+      tutorial.step = 2;
+      tutorial.text = TUTORIAL_STEPS[2](playerName);
+      tutorial.alpha = 255;
+    }
+    // STEP-2 ▸ fade out, then finish
+    else if (tutorial.step === 2) {
+      tutorial.alpha -= 0.5; // fade-out
+      if (tutorial.alpha <= 0) {
+        tutorial.active = false;
+        localStorage.setItem(TUT_KEY, '1'); // never show again
+      }
+    }
+  }
+
+  function drawTutorial() {
+    if (!tutorial.active) return;
+    p.push();
+    p.textAlign(p.CENTER, p.TOP);
+    p.textFont('monospace');
+    p.textSize(18);
+    p.fill(255, tutorial.alpha);
+    p.stroke(0, tutorial.alpha);
+    p.strokeWeight(4);
+    // keep it near the player so it scrolls with the camera
+    p.text(tutorial.text, viewport.WORLD.w / 2, player.pos.y - player.r - 60);
+    p.pop();
   }
 
   window.p = p;

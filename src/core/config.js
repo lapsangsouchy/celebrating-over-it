@@ -1,3 +1,41 @@
+/* ---------- Fail-State progression --------------------------------- */
+/* Each object = one upgrade in story order. */
+export const FAIL_STATES = [
+  {
+    // 0 ► Long Arm
+    name: 'longArm',
+    checkpointY: 0, // stand here first…
+    topBoundY: -256, // …then climb above this OR
+    bottomBoundY: 128, //    fall below this to trigger
+    message: (playerName) =>
+      `But then ${playerName} learned to reach further the next time!\n` +
+      `${playerName} unlocked LONG ARM!`,
+    unlock: (player) => player.unlockLongArm(240), // call on trigger
+  },
+  {
+    // 1 ► Movement+Jump   (todo)
+    name: 'moveBoost',
+    checkpointY: -800, // placeholder numbers
+    topBoundY: -1056,
+    bottomBoundY: -544,
+    message: (playerName) => 'TODO: you can jump farther!',
+    unlock: (player) => {
+      /* add later */
+    },
+  },
+  {
+    // 2 ► Attack          (todo)
+    name: 'attackUpgrade',
+    checkpointY: -1600,
+    topBoundY: -1856,
+    bottomBoundY: -1344,
+    message: (playerName) => 'TODO: Alex can now smash obstacles!',
+    unlock: (player) => {
+      /* add later */
+    },
+  },
+];
+
 export const MSG_TIME_FRAMES = 600; // 4-second toast
 
 export const TILE_SIZE = 16; // world pixels per tile

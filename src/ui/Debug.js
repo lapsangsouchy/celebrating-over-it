@@ -129,7 +129,7 @@ export function drawGrid(p, cam, spacing = Debug.snap) {
   for (let y = firstY; y <= botY; y += GRID_UNIT) {
     p.stroke(y % big ? 70 : 120);
     p.line(leftX, y, rightX, y);
-    if ((y / GRID_UNIT) % 4 === 0) {
+    if ((y / GRID_UNIT) % 1 === 0) {
       p.fill(0);
       p.noStroke();
       p.textSize(12);

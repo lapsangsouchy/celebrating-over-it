@@ -10,7 +10,9 @@ import {
   CLIFF_W,
   MSG_TIME_FRAMES,
   FAIL_STATES,
+  GRID_UNIT,
 } from '../core/config.js';
+import { COPY, Story } from '../ui/Story.js';
 import { buildCliffStone } from '../systems/Cliff.js';
 
 import {
@@ -25,46 +27,30 @@ import {
 
 import * as viewport from '../ui/viewport.js';
 
-const STATE_INTRO = 'intro'; // selfie?
-const STATE_CAM = 'webcam'; // live preview & capture
-const STATE_REVIEW = 'review'; // show round selfie Yes / Retake
-const STATE_NAME = 'name'; // enter your name
-const STATE_PLAY = 'playing'; // normal gameplay
-
-let gameState = STATE_INTRO;
-
-/* ---------- One-time tutorial ------------------------------------ */
-const TUT_KEY = 'advTutSeen'; // localStorage flag
-const TUTORIAL_STEPS = [
-  (name) =>
-    `${name} saw the mountain and used\n` +
-    'their mouse / trackpad to reach and click + hold a surface.',
-  (name) =>
-    `While holding, ${name} found that\n` +
-    `by dragging their mouse/trackpad they could move.`,
-  (name) => `${name} started climbing!`,
-];
-let tutorial = { active: false, step: 0, alpha: 255, text: '' };
-
-/* ---------- Story Layer ----------------------------------------- */
-const STORY_MARKERS = [
-  //  y-values are world-space.  Positive = below ground, negative = above.
-  { y: GROUND_Y - 80, msg: (n) => `${n} began to get the hang of things…` },
-  { y: -128, msg: (n) => `Until there was a place ${n} couldn't reach...` },
-  {
-    y: -512,
-    msg: (n) => `${n} felt like they could make it further than before.`,
-  },
-  { y: -1024, msg: (n) => `Clouds parted; the summit still loomed.` },
-];
-let storySeen = new Set(); // remembers which markers are done
-
-// transient pop-ups (fail-states, upgrades, etc.)
-let storyPopup = { txt: '', alpha: 0 }; // alpha==0 → idle
-
 /* ---------- Start of p5.js Implementation --------------------------- */
 
 new p5((p) => {
+  const STATE_INTRO = 'intro'; // selfie?
+  const STATE_CAM = 'webcam'; // live preview & capture
+  const STATE_REVIEW = 'review'; // show round selfie Yes / Retake
+  const STATE_NAME = 'name'; // enter your name
+  const STATE_PLAY = 'playing'; // normal gameplay
+
+  let gameState = STATE_INTRO;
+
+  /* ---------- One-time tutorial ------------------------------------ */
+  const TUT_KEY = 'advTutSeen'; // localStorage flag
+  const TUTORIAL_STEPS = COPY.TUT;
+  let tutorial = { active: false, step: 0, alpha: 255, text: '' }; // tutorial state
+
+  /* ---------- Story Layer ----------------------------------------- */
+  const STORY_MARKERS = COPY.MARKERS; // height-triggered captions
+  let storySeen = new Set(); // remembers which markers are done
+
+  const story = new Story(p); // toast manager
+
+  // transient pop-ups (fail-states, upgrades, etc.)
+  let storyPopup = { txt: '', alpha: 0 }; // alpha==0 → idle
   /* game objects */
   let player, camera, level;
 
@@ -302,28 +288,34 @@ new p5((p) => {
           checkpointHit = true;
         }
 
-        // 2. once at checkpoint, look for “fail” bounds
-        if (
-          checkpointHit &&
-          (player.pos.y <= fs.topBoundY || player.pos.y >= fs.bottomBoundY)
-        ) {
-          fs.unlock(player); // apply upgrade
-          msgTimer = MSG_TIME_FRAMES;
-          checkpointHit = false; // reset for next stage
-          failIndex++; // advance to next fail-state
+        if (!checkpointHit) {
+        } else if (player.pos.y >= fs.bottomBoundY) {
+          const newLen = Math.min(player.maxLen + fs.stepLen, fs.targetLen);
+          if (newLen > player.maxLen) {
+            player.setMaxRopeLength(newLen);
+            story.queue(COPY.TOASTS[fs.toastStep](playerName));
+            checkpointHit = false; // reset for next fail-state
+          }
+          // Done? lock-in full long-arm, advance to next fail-state
+          if (newLen >= fs.targetLen) {
+            player.unlockLongArm(fs.targetLen);
+            story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
+            failIndex++;
+            checkpointHit = false; // reset for next fail-state
+          }
+        } else if (player.pos.y <= fs.topBoundY) {
+          // If player finds a way to climb above the checkpoint without long-arm
+          if (!player.longArmUnlocked) {
+            player.unlockLongArm(fs.targetLen);
+            story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
+            failIndex++;
+            checkpointHit = false; // reset for next fail-state
+          }
         }
       }
 
       /* ---------- UI toast ---------- */
-      if (msgTimer > 0) {
-        const fs = FAIL_STATES[failIndex - 1]; // the one we just unlocked
-        // drawCenteredToast(
-        //   fs.message(playerName),
-        //   255 * (msgTimer / MSG_TIME_FRAMES)
-        // );
-        storyPop(fs.message(playerName));
-        msgTimer--;
-      }
+      story.draw(player);
 
       player.draw();
 
@@ -412,8 +404,10 @@ new p5((p) => {
   /* ---------- helper functions ---------- */
 
   function calcLayout() {
-    playW = viewport.WORLD.w - CLIFF_W; // play area width
+    // playW = viewport.WORLD.w - CLIFF_W; // play area width
     rightGutter = CLIFF_W; // right side wall
+    // rightGutter = Math.round(CLIFF_W / viewport.s / GRID_UNIT) * GRID_UNIT; // right side wall
+    playW = viewport.WORLD.w - rightGutter; // play area width
   }
 
   function buildInitialPlatforms() {
@@ -630,8 +624,7 @@ new p5((p) => {
     // HEIGHT-TRIGGERED CAPTIONS ──────────────────────────────────
     for (const m of STORY_MARKERS) {
       if (!storySeen.has(m) && player.pos.y <= m.y) {
-        storyPopup.txt = m.msg(playerName);
-        storyPopup.alpha = 255; // full opacity
+        story.queue(COPY.M[m.key](playerName)); // one-shot toast
         storySeen.add(m);
         break; // one at a time
       }

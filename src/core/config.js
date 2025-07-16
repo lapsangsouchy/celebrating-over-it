@@ -7,10 +7,11 @@ export const FAIL_STATES = [
     checkpointY: 0, // stand here first…
     topBoundY: -256, // …then climb above this OR
     bottomBoundY: 128, //    fall below this to trigger
-    message: (playerName) =>
-      `But then ${playerName} learned to reach further the next time!\n` +
-      `${playerName} unlocked LONG ARM!`,
-    unlock: (player) => player.unlockLongArm(240), // call on trigger
+    targetLen: 240, // final length
+    stepLen: 30, // arm pixel increase every fall
+    unlock: (player) => player.unlockLongArm(240),
+    toastStep: 'ARM_STEP',
+    toastUnlock: 'ARM_UNLOCK',
   },
   {
     // 1 ► Movement+Jump   (todo)

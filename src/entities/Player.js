@@ -5,7 +5,7 @@ import { projectToEdge, nearestEdgePoint } from '../systems/Level.js';
 
 const STIFFNESS = 0.25; // 0 → jelly, 1 → instant lock
 export class Player {
-  constructor(p, level, getCamY) {
+  constructor(p, level, getCamY, getRightGutter = () => CLIFF_W) {
     this.p = p; // store the p5 instance
     this.level = level; // need it for collisions
     this.getCamY = getCamY; // for mouse world coords
@@ -30,6 +30,9 @@ export class Player {
 
     /* face? */
     this.face = null;
+
+    /* helper for right gutter */
+    this.getRightGutter = getRightGutter; // function to get right gutter width
   }
 
   /* ---------- FACE HELPER ---------- */
@@ -271,7 +274,7 @@ export class Player {
   constrainToLane() {
     const half = this.r; // half the player
     const left = half; // left edge of player
-    const right = viewport.WORLD.w - CLIFF_W - half; // right edge of player
+    const right = viewport.WORLD.w - this.getRightGutter() - half; // right edge of player
     if (this.pos.x < left) {
       this.pos.x = left;
     }

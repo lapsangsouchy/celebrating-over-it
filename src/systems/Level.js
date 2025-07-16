@@ -22,10 +22,24 @@ export class Level {
     kind
   ) {
     // this.platforms.push({ x, y: yTop, w, hHit, hArt, isGround, kind });
-    const x = snap(laneX); // lane coord → world coord
-    w = snap(w); // width locked to grid
-    yTop = snap(yTop); // (optional – keeps rows tidy)
-    this.platforms.push({ x, y: yTop, w, hHit, hArt, isGround, kind });
+
+    let x = snap(laneX); // lane coord → world coord
+    const spec = this.tiles[kind] ?? {};
+    if (spec.snapW !== false) w = snap(w);
+    if (spec.align === 'right') x += GRID_UNIT - w;
+
+    const mod = yTop % GRID_UNIT;
+    // if (!(hArt < GRID_UNIT && mod === GRID_UNIT - hArt)) yTop = snap(yTop); // (optional – keeps rows tidy)
+    this.platforms.push({
+      x,
+      y: yTop,
+      w,
+      hHit,
+      hArt,
+      isGround,
+      latchable: spec.noLatch ? false : true,
+      kind,
+    });
   }
 
   addRow(y, positions, w, hHit, hArt) {
@@ -64,6 +78,14 @@ export class Level {
           4096,
           scale
         );
+        break;
+      case 'single':
+        const tileW = spec.tileImg.width * scale;
+        const tileH = spec.tileImg.height * scale;
+        const g = this.p.createGraphics(tileW, tileH);
+        g.noSmooth();
+        g.image(spec.tileImg, 0, 0, tileW, tileH);
+        this.cache[key] = g;
         break;
       default:
         this.cache[key] = defaultStrip(this.p, w);

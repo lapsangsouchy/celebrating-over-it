@@ -251,6 +251,7 @@ export class Player {
     /* 1. Find the FIRST rectangle that already contains the tip */
     let anchor = null;
     for (const r of this.level.platforms) {
+      if (r.latchable === false) continue;
       const top = r.y - EDGE_TOL;
       const bottom = r.y + (r.hHit ?? r.h) + EDGE_TOL;
       const left = r.x - EDGE_TOL;

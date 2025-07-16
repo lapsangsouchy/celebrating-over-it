@@ -76,6 +76,7 @@ new p5((p) => {
   const BRUSH_W = 64; // standard width
   const HIT = 32; // hHit
   const ART = 64; // hArt (64)
+  let brushHalf = 0;
   let brushKinds = [];
   let brushIndex = 0; // selection index in BRUSH_KINDS
   const getBrushKind = () => brushKinds[brushIndex];
@@ -129,6 +130,20 @@ new p5((p) => {
       } else if (def.method === 'repeat' || def.method === 'tileY') {
         // repeat or tileY
         def.tileImg = atlas.get(def.tile.x, def.tile.y, def.tile.w, def.tile.h);
+      } else if (def.method === 'single') {
+        def.tileImg = atlas.get(def.tile.x, def.tile.y, def.tile.w, def.tile.h);
+        if (def.flipX) {
+          const w = def.tileImg.width;
+          const h = def.tileImg.height;
+          const g = p.createGraphics(w, h);
+          g.noSmooth();
+          g.push();
+          g.translate(w, 0);
+          g.scale(-1, 1);
+          g.image(def.tileImg, 0, 0);
+          g.pop();
+          def.tileImg = g;
+        }
       } else if (def.method === 'cliff') {
         // cliff
         def.stoneImg = atlas.get(
@@ -256,13 +271,24 @@ new p5((p) => {
       /* ---------- brush preview ---------- */
       if (Debug.brush) {
         const v = viewport.screenToWorld(p.mouseX, p.mouseY);
+        const k = getBrushKind();
+        const w = naturalWidth(k);
+        const strip = level.getStrip(k, w);
         const ghost = { x: v.x, y: v.y + camera.camY };
         // snap to grid
         ghost.x = Math.round(ghost.x / Debug.snap) * Debug.snap;
         ghost.y = Math.round(ghost.y / Debug.snap) * Debug.snap;
 
+        if (brushHalf && strip.height < GRID_UNIT)
+          ghost.y += GRID_UNIT - strip.height;
         // sprite for the current brush kind
-        const strip = level.getStrip(getBrushKind(), BRUSH_W);
+        function naturalWidth(kind) {
+          const t = TILES[kind];
+          return t.method === 'single' ? t.tile.w * (t.scale ?? 4) : BRUSH_W;
+        }
+        // const strip = level.getStrip(getBrushKind(), BRUSH_W);
+
+        if (TILES[k].align === 'right') ghost.x += GRID_UNIT - strip.width;
 
         p.push();
         p.tint(255, 160); // 60 % alpha so it looks ghosty
@@ -372,12 +398,21 @@ new p5((p) => {
   };
 
   p.mouseReleased = () => {
-    if (Debug.brush || brushStart) {
+    if (Debug.brush && brushStart) {
       const laneX = brushStart.x; // convert to lane coord
-      const yTop = brushStart.y;
+      let yTop = brushStart.y;
+      const kind = getBrushKind();
+      const spec = TILES[kind] ?? {};
+      const wPix =
+        spec.method === 'single' ? spec.tile.w * (spec.scale ?? 4) : BRUSH_W;
+      const hit = 'hit' in spec ? spec.hit : HIT; // If hit is 0 it's not latchable
 
-      level.addPlatform(laneX, yTop, BRUSH_W, HIT, ART, false, getBrushKind());
-      const code = `level.addPlatform(${laneX}, ${yTop}, ${BRUSH_W}, ${HIT}, ${ART}, false, '${getBrushKind()}');`;
+      let hArt = 64;
+      if ('art' in spec) hArt = spec.art;
+      else if (spec.tile) hArt = spec.tile.h * (spec.scale ?? 4);
+      if (brushHalf && hArt < GRID_UNIT) yTop += GRID_UNIT - hArt;
+      level.addPlatform(laneX, yTop, wPix, hit, ART, false, kind);
+      const code = `level.addPlatform(${laneX}, ${yTop}, ${wPix}, ${hit}, ${hArt}, false, '${kind}');`;
       console.log(code); // ← copy-paste this
 
       brushStart = null;
@@ -430,16 +465,25 @@ new p5((p) => {
     level.addPlatform(448, 0, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(180, -128, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(192, -384, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(320, -576, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(448, -576, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(320, -640, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(448, -640, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(320, -704, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(448, -704, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(320, -768, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(448, -768, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(320, -832, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(448, -832, 64, 32, 64, false, 'tinyGrass');
+
+    // Stone Wall with grass patches 1
+    level.addPlatform(320, -576, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -640, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -704, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(256, -544, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(256, -576, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(512, -512, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(384, -704, 16, 32, 32, false, 'grassySurfaceL');
+
+    // Stone Separator -> onto fail state #2
+    level.addPlatform(128, -832, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(576, -960, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(512, -960, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(448, -960, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -960, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -960, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(256, -960, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -960, 64, 64, 64, false, 'stoneBlock');
   }
 
   // function drawCenteredToast(txt, alpha = 255) {
@@ -676,5 +720,19 @@ new p5((p) => {
   p.keyPressed = (e) => {
     if (p.keyCode === p.ESCAPE) resetGame();
     handleDebugKeyPress(e, player);
+    // --- cycle brush kinds with [ and ] ---------------------------------
+    if (Debug.active && Debug.brush && brushKinds.length) {
+      if (e.key === ']') {
+        brushIndex = (brushIndex + 1) % brushKinds.length; // next kind
+        console.log('Brush →', getBrushKind());
+      } else if (e.key === '[') {
+        brushIndex = (brushIndex - 1 + brushKinds.length) % brushKinds.length; // prev kind
+        console.log('Brush ←', getBrushKind());
+      }
+      if (e.key === 'v') {
+        brushHalf ^= 1;
+        console.log('Brush half:', brushHalf ? 'BOTTOM' : 'TOP');
+      }
+    }
   };
 });

@@ -23,6 +23,7 @@ import {
   drawWorldBounds,
   drawLaneBounds,
   drawHitboxes,
+  drawArmLenHUD,
 } from '../ui/Debug.js';
 
 import * as viewport from '../ui/viewport.js';
@@ -54,15 +55,12 @@ new p5((p) => {
   /* game objects */
   let player, camera, level;
 
-  let playerName = 'you'; // default player name
+  let playerName = 'You'; // default player name
 
   /*layout variables */
   let playW;
   let rightGutter;
   let cliffG;
-
-  /* ---------- assets ---------- */
-  let imgEdge, imgCenter, imgPlatform;
 
   /* ---------- webcam globals ---------- */
   let cam,
@@ -72,7 +70,6 @@ new p5((p) => {
   /* ---------- fail globals ---------- */
   let failIndex = 0; // index in FAIL_STATES
   let checkpointHit = false; // reached that state's platform?
-  let msgTimer = 0; // frames to show message
 
   /* ---------- brush globals ---------- */
   let brushStart = null; // {x,y} when you press
@@ -231,7 +228,7 @@ new p5((p) => {
     if (gameState === STATE_PLAY) {
       p.imageMode(p.CORNER); // reset image mode
       p.background(220);
-      debugPreUpdate(player);
+      debugPreUpdate(p, player);
 
       viewport.begin(p); // scale and center
 
@@ -292,7 +289,7 @@ new p5((p) => {
         } else if (player.pos.y >= fs.bottomBoundY) {
           const newLen = Math.min(player.maxLen + fs.stepLen, fs.targetLen);
           if (newLen > player.maxLen) {
-            player.setMaxRopeLength(newLen);
+            player.gainReach(newLen - player.maxLen);
             story.queue(COPY.TOASTS[fs.toastStep](playerName));
             checkpointHit = false; // reset for next fail-state
           }
@@ -324,6 +321,8 @@ new p5((p) => {
 
       camera.end();
       viewport.end(p); // pop
+
+      drawArmLenHUD(p, player); // show arm length HUD
 
       const worldRightScreenX = viewport.WORLD.w * viewport.s;
       if (p.width > worldRightScreenX) {
@@ -388,10 +387,6 @@ new p5((p) => {
     player.release();
   };
 
-  p.keyPressed = () => {
-    if (p.keyCode === p.ESCAPE) resetGame();
-  };
-
   /* ---------- window resize ---------- */
 
   p.windowResized = () => {
@@ -422,14 +417,29 @@ new p5((p) => {
       'groundFill'
     );
 
-    level.addPlatform(450, 250, 50, 32, 70, false, 'tinyGrass');
+    // level.addPlatform(450, 250, 50, 32, 70, false, 'tinyGrass');
 
-    level.addPlatform(320, 128, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(384, 0, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(576, -128, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(320, -320, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(128, -512, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(384, -640, 64, 32, 64, false, 'tinyGrass');
+    // level.addPlatform(320, 128, 64, 32, 64, false, 'tinyGrass');
+    // level.addPlatform(384, 0, 64, 32, 64, false, 'tinyGrass');
+    // level.addPlatform(576, -128, 64, 32, 64, false, 'tinyGrass');
+    // level.addPlatform(320, -320, 64, 32, 64, false, 'tinyGrass');
+    // level.addPlatform(128, -512, 64, 32, 64, false, 'tinyGrass');
+    // level.addPlatform(384, -640, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(320, 256, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(448, 128, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(448, 0, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(180, -128, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(192, -384, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(320, -576, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(448, -576, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(320, -640, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(448, -640, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(320, -704, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(448, -704, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(320, -768, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(448, -768, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(320, -832, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(448, -832, 64, 32, 64, false, 'tinyGrass');
   }
 
   // function drawCenteredToast(txt, alpha = 255) {
@@ -664,6 +674,7 @@ new p5((p) => {
 
   /* ---------- debug stuff ---------- */
   p.keyPressed = (e) => {
+    if (p.keyCode === p.ESCAPE) resetGame();
     handleDebugKeyPress(e, player);
   };
 });

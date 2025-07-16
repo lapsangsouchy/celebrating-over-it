@@ -30,7 +30,8 @@ export const COPY = {
   // fail-state / power-up blurbs
   TOASTS: {
     ARM_STEP: (n) => `${n} stretched a little further…`,
-    ARM_UNLOCK: (n) => `${n} unlocked LONG ARM!`,
+    ARM_UNLOCK: (n) =>
+      `${n} realized they could reach\n` + 'even further than before!.',
   },
 };
 

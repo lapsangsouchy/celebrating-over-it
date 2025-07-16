@@ -8,7 +8,7 @@ export const FAIL_STATES = [
     topBoundY: -256, // …then climb above this OR
     bottomBoundY: 128, //    fall below this to trigger
     targetLen: 240, // final length
-    stepLen: 30, // arm pixel increase every fall
+    stepLen: 40, // arm pixel increase every fall
     unlock: (player) => player.unlockLongArm(240),
     toastStep: 'ARM_STEP',
     toastUnlock: 'ARM_UNLOCK',
@@ -41,7 +41,7 @@ export const MSG_TIME_FRAMES = 600; // 4-second toast
 
 export const TILE_SIZE = 16; // world pixels per tile
 export const SCALE = 4; // world pixels per screen pixel
-export const CLIFF_W = 200; // width of the right cliff
+export const CLIFF_W = 160; // width of the right cliff
 export const GRID_UNIT = 64; // grid size for snapping
 export const GRAVITY = 0.4; // gravity strength
 export const FRICTION = 0.98; // friction strength

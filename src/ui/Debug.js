@@ -75,7 +75,7 @@ export function handleDebugKeyPress(e, player) {
 //--------------------------------------------------------------
 // PRE‑UPDATE (call once each frame BEFORE physics)
 //--------------------------------------------------------------
-export function debugPreUpdate(player) {
+export function debugPreUpdate(p, player) {
   if (!(Debug.active && Debug.freeMove)) return;
 
   // Cancel velocity so player stays put when keys released
@@ -175,5 +175,21 @@ export function drawHitboxes(p, level) {
   for (const r of level.platforms) {
     p.rect(r.x, r.y, r.w, r.hHit);
   }
+  p.pop();
+}
+
+export function drawArmLenHUD(p, player) {
+  if (!Debug.active) return; // only when debug is ON
+
+  p.push();
+  p.textFont('monospace');
+  p.textSize(14);
+  p.noStroke();
+  p.fill('#7b00ffff');
+  p.text(
+    `ARM: ${player.maxLen}`,
+    10,
+    60 // x,y in SCREEN space
+  );
   p.pop();
 }

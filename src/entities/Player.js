@@ -27,6 +27,16 @@ export class Player {
 
     /* upgrades */
     this.longArmUnlocked = false; // true when player unlocks long arm
+    this.armSegments = [];
+    this.totalArmLen = 120; // Base of arm from beginning of game
+    this.palette = [
+      p.color('#ff595e'),
+      p.color('#ffca3a'),
+      p.color('#8ac926'),
+      p.color('#1982c4'),
+      p.color('#6a4c93'),
+    ];
+    this.nextColIdx = 0; // next color index to use
 
     /* face? */
     this.face = null;
@@ -43,7 +53,7 @@ export class Player {
   /* ---------- UPGRADES / POWER-UPS ---------- */
   unlockLongArm(len) {
     if (this.longArmUnlocked) return; // guard
-    this.maxLen = len;
+    if (len > this.maxLen) this.gainReach(len - this.maxLen);
     this.longArmUnlocked = true;
   }
 
@@ -97,6 +107,62 @@ export class Player {
     // expose both: tipPos for drawing, firstInside for latching
     this._candidateAnchor = this.anchor; // store for tryLatch()
     return tipPos;
+  }
+
+  gainReach(deltaLen) {
+    // 1. Add a “ring” at the tip
+    const col = this.palette[this.nextColIdx++ % this.palette.length];
+    this.armSegments.unshift({ len: deltaLen, col }); // newest first
+
+    // 2. Keep your numeric truth-source in sync
+    this.totalArmLen += deltaLen;
+
+    /* let the physics layer know */
+    this.maxLen += deltaLen; // grow the legal reach
+    this.ropeLen = this.p.constrain(this.ropeLen, MIN_LEN, this.maxLen);
+  }
+
+  drawArm() {
+    const p = this.p;
+    const tip = this.armTip();
+    const base = this.armBase();
+    const bodyR = this.r;
+
+    /* 0.  hidden?  */
+    const distToBody = p.dist(tip.x, tip.y, this.pos.x, this.pos.y);
+    if (distToBody <= bodyR + 0.5) return; // fully retracted 🚫
+
+    /* 1.  how much rope is outside the body?  */
+    let exposed = p.dist(tip.x, tip.y, base.x, base.y); // px
+
+    /* 2.  draw coloured rings starting at the TIP and walking toward BASE  */
+    const dirInward = p5.Vector.sub(base, tip).normalize(); // tip → base
+
+    p.strokeWeight(6);
+    p.strokeCap(p.SQUARE);
+
+    let start = tip.copy(); // begin at the fingertip
+    for (const seg of this.armSegments) {
+      if (exposed <= 0) break;
+      const segLen = Math.min(seg.len, exposed);
+      const end = p5.Vector.add(start, p5.Vector.mult(dirInward, segLen));
+      p.stroke(seg.col);
+      p.line(start.x, start.y, end.x, end.y);
+      start = end;
+      exposed -= segLen;
+    }
+
+    /* 3.  draw the plain-grey base only if some length is still un-painted  */
+    if (exposed > 0) {
+      const end = p5.Vector.add(start, p5.Vector.mult(dirInward, exposed));
+      p.stroke(40);
+      p.line(start.x, start.y, end.x, end.y);
+    }
+
+    /* 4.  always stamp a round cap at the true tip so it stays curved  */
+    p.noStroke();
+    p.fill(this.armSegments.length ? this.armSegments[0].col : 40);
+    p.circle(tip.x, tip.y, 6);
   }
 
   /* ---------- mouse world helpers ---------- */
@@ -157,11 +223,12 @@ export class Player {
     const p = this.p; // shorthand inside this method
 
     /* 1. draw rope */
-    p.stroke(40);
-    p.strokeWeight(6);
-    const tip = this.armTip();
-    const base = this.armBase();
-    p.line(base.x, base.y, tip.x, tip.y);
+    // p.stroke(40);
+    // p.strokeWeight(6);
+    // const tip = this.armTip();
+    // const base = this.armBase();
+    // p.line(base.x, base.y, tip.x, tip.y);
+    this.drawArm();
 
     /* 2. draw body */
     p.noStroke();

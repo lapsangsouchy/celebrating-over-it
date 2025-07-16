@@ -6,6 +6,7 @@ export const TILES = {
     mid: { x: 8, y: 296, w: 8, h: 8 }, // middle tile
     scale: 4,
     method: 'caps',
+    art: 32,
   },
   grass16: {
     tile: { x: 0, y: 296, w: 16, h: 16 }, // one tile only

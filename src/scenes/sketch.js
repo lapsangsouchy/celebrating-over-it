@@ -91,10 +91,18 @@ new p5((p) => {
   let bg;
   const WORLD_H = 40000; // however tall your climb is (px)
 
+  /* ----------- Music ------------------ */
+  let bgMusic;
+  const VOLUME_STEPS = [0, 0.5, 1];
+  let volIndex = 1;
+
   /* ---------- p5.js preload ---------- */
 
   p.preload = () => {
     atlas = p.loadImage(new URL('../assets/tilemap.png', import.meta.url).href);
+    bgMusic = p.loadSound(
+      new URL('../assets/OverTheClover.m4a', import.meta.url).href
+    );
   };
 
   /* ---------- p5.js setup ---------- */
@@ -360,19 +368,19 @@ new p5((p) => {
           }
           // Done? lock-in full long-arm, advance to next fail-state
           if (newLen >= fs.targetLen) {
+            if (hasTargetLen(fs)) {
+              failIndex++; // player earned this earlier; skip it
+              checkpointHit = false;
+              return;
+            }
             player.unlockLongArm(fs.targetLen);
             story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
             failIndex++;
             checkpointHit = false; // reset for next fail-state
           }
         } else if (player.pos.y <= fs.topBoundY) {
-          // if (hasTargetLen(fs)) {
-          //   failIndex++; // player earned this earlier; skip it
-          //   checkpointHit = false;
-          //   return;
-          // }
           // If player finds a way to climb above the checkpoint without long-arm
-          if (!player.maxLen) {
+          if (player.maxLen !== fs.targetLen) {
             player.unlockLongArm(fs.targetLen);
             story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
             failIndex++;
@@ -401,6 +409,11 @@ new p5((p) => {
         p.rect(worldRightScreenX, 0, p.width - worldRightScreenX, p.height);
       }
       debugOverlay(); // show / hide the Reset-Cookies button
+      if (!bgMusic.isPlaying()) {
+        bgMusic.setVolume(VOLUME_STEPS[volIndex]);
+        bgMusic.loop();
+      }
+      drawVolumeBtn();
     }
   };
 
@@ -627,8 +640,8 @@ new p5((p) => {
       txt.remove();
       player.setFace(faceSnap);
       if (faceSnap) {
-        const dataURL = faceSnap.canvas.toDataURL('image/png');
-        localStorage.setItem('advFace', dataURL);
+        // const dataURL = faceSnap.canvas.toDataURL('image/png');
+        // localStorage.setItem('advFace', dataURL);
       }
       gotoNameScreen();
     });
@@ -659,7 +672,7 @@ new p5((p) => {
     ok.mousePressed(() => {
       const name = input.value().trim() || 'you';
       playerName = name;
-      localStorage.setItem('advName', name);
+      // localStorage.setItem('advName', name);
       prompt.remove();
       input.remove();
       ok.remove();
@@ -709,7 +722,7 @@ new p5((p) => {
       tutorial.alpha -= 0.5; // fade-out
       if (tutorial.alpha <= 0) {
         tutorial.active = false;
-        localStorage.setItem(TUT_KEY, '1'); // never show again
+        // localStorage.setItem(TUT_KEY, '1'); // never show again
       }
     }
   }
@@ -731,7 +744,7 @@ new p5((p) => {
   /* ---------- story functions ---------- */
   function updateStory() {
     // skip story if tutorial already seen
-    if (!localStorage.getItem(TUT_KEY)) return;
+    // if (!localStorage.getItem(TUT_KEY)) return;
 
     // HEIGHT-TRIGGERED CAPTIONS ──────────────────────────────────
     for (const m of STORY_MARKERS) {
@@ -764,6 +777,51 @@ new p5((p) => {
       p.width / 3, // roughly lane-centre
       player.pos.y + txtOffset
     ); // world coords → scrolls w/ cam
+    p.pop();
+  }
+
+  /* ─────────────────────────────────────── */
+  /*  UI helpers                            */
+  /* ─────────────────────────────────────── */
+
+  // pixel coords for the button based on current canvas & gutter
+  function volumeBtnRect() {
+    const gutterX = viewport.WORLD.w * viewport.s; // left edge of gutter
+    const gutterW = p.width - gutterX;
+    const size = 32; // square button
+    return {
+      x: gutterX + gutterW / 2 - size / 2,
+      y: 20,
+      w: size,
+      h: size,
+    };
+  }
+
+  function drawVolumeBtn() {
+    const { x, y, w, h } = volumeBtnRect();
+    p.push();
+    p.stroke(0, 50); // subtle outline
+    p.fill(40, 180); // dark translucent bg
+    p.rect(x, y, w, h, 6);
+    p.noStroke();
+    p.fill(255);
+
+    // icon changes with volume level
+    if (VOLUME_STEPS[volIndex] === 0) {
+      // muted (simple “X”)
+      p.line(x + 8, y + 8, x + w - 8, y + h - 8);
+      p.line(x + 8, y + h - 8, x + w - 8, y + 8);
+    } else {
+      // speaker cone
+      p.triangle(x + 8, y + 10, x + 8, y + h - 10, x + 14, y + h / 2);
+      // arcs → one bar = medium, two bars = loud
+      if (VOLUME_STEPS[volIndex] >= 0.5) {
+        p.arc(x + 18, y + h / 2, 12, 12, -p.PI / 4, p.PI / 4);
+      }
+      if (VOLUME_STEPS[volIndex] > 0.5) {
+        p.arc(x + 23, y + h / 2, 16, 16, -p.PI / 4, p.PI / 4);
+      }
+    }
     p.pop();
   }
 

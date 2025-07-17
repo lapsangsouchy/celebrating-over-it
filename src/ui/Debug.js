@@ -48,9 +48,11 @@ export function handleDebugKeyPress(e, player) {
       break;
     case 'l':
     case 'L':
-      if (Debug.active) Debug.longArm = !Debug.longArm;
-      player.setMaxRopeLength(Debug.longArm ? 240 : MAX_LEN);
-      console.log('Long arm:', Debug.longArm ? 'ON (240)' : 'OFF (170)');
+      if (Debug.active) {
+        if (Debug.active) Debug.longArm = !Debug.longArm;
+        player.setMaxRopeLength(Debug.longArm ? 240 : MAX_LEN);
+        console.log('Long arm:', Debug.longArm ? 'ON (240)' : 'OFF (170)');
+      }
       break;
     case 'h':
     case 'H':

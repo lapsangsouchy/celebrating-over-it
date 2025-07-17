@@ -178,8 +178,16 @@ export function drawHitboxes(p, level) {
   p.pop();
 }
 
-export function drawArmLenHUD(p, player) {
+export function drawArmLenHUD(p, player, camera) {
   if (!Debug.active) return; // only when debug is ON
+
+  // 1. mouse position in WORLD coords
+  const v = viewport.screenToWorld(p.mouseX, p.mouseY);
+  const mouse = { x: v.x, y: v.y + camera.camY };
+
+  // 2. distance from player centre to mouse
+  const needLen = Math.hypot(mouse.x - player.pos.x, mouse.y - player.pos.y);
+  const needRounded = Math.round(needLen);
 
   p.push();
   p.textFont('monospace');
@@ -187,7 +195,7 @@ export function drawArmLenHUD(p, player) {
   p.noStroke();
   p.fill('#7b00ffff');
   p.text(
-    `ARM: ${player.maxLen}`,
+    `ARM: ${player.maxLen} / ${needRounded}`,
     10,
     60 // x,y in SCREEN space
   );

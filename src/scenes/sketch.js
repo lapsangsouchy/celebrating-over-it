@@ -26,6 +26,8 @@ import {
   drawArmLenHUD,
 } from '../ui/Debug.js';
 
+import Background from '../systems/Background.js';
+
 import * as viewport from '../ui/viewport.js';
 
 /* ---------- Start of p5.js Implementation --------------------------- */
@@ -85,6 +87,9 @@ new p5((p) => {
   /* ---------- Cookie reset helpers ---------------------------------------- */
   let btnResetCookies = null; // DOM button handle
   const SAVE_KEYS = ['advName', 'advFace', 'advTutSeen']; // add more later
+
+  let bg;
+  const WORLD_H = 40000; // however tall your climb is (px)
 
   /* ---------- p5.js preload ---------- */
 
@@ -191,6 +196,8 @@ new p5((p) => {
     viewport.update(); // // updates scale (s) & letterbox offset
     calcLayout(); // sets playW & gutter
 
+    bg = new Background(WORLD_H, viewport.WORLD.w, p);
+
     cliffG = buildCliffStone(
       p,
       CLIFF_W, // width of the right-side wall
@@ -248,6 +255,12 @@ new p5((p) => {
       viewport.begin(p); // scale and center
 
       camera.update();
+
+      const SKY_START_Y = 400;
+      if (camera.camY < SKY_START_Y) {
+        bg.draw(0, camera.camY);
+      }
+
       camera.begin(); // follow-y
 
       // find first tile that sits just above view
@@ -348,7 +361,7 @@ new p5((p) => {
       camera.end();
       viewport.end(p); // pop
 
-      drawArmLenHUD(p, player); // show arm length HUD
+      drawArmLenHUD(p, player, camera); // show arm length HUD
 
       const worldRightScreenX = viewport.WORLD.w * viewport.s;
       if (p.width > worldRightScreenX) {
@@ -428,6 +441,7 @@ new p5((p) => {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
     viewport.update(); // update viewport
     calcLayout();
+    bg = new Background(WORLD_H, viewport.WORLD.w, p); // rebuild to new width
     level.playW = playW; // update spacing helper
   };
 

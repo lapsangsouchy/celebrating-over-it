@@ -137,14 +137,32 @@ new p5((p) => {
         def.tileImg = atlas.get(def.tile.x, def.tile.y, def.tile.w, def.tile.h);
       } else if (def.method === 'single') {
         def.tileImg = atlas.get(def.tile.x, def.tile.y, def.tile.w, def.tile.h);
-        if (def.flipX) {
+        // --------------------------------------------------
+        // 1️⃣ 90-degree rotation (if rot90 flag present)
+        // --------------------------------------------------
+        if (def.rot90) {
+          const w = def.tileImg.height;
+          const h = def.tileImg.width;
+          const g = p.createGraphics(w, h);
+          g.noSmooth();
+          g.push();
+          g.translate(w, 0); // rotate by +90°
+          g.rotate(p.HALF_PI);
+          g.image(def.tileImg, 0, 0);
+          g.pop();
+          def.tileImg = g;
+        }
+        // --------------------------------------------------
+        // 2️⃣ optional X or Y flip
+        // --------------------------------------------------
+        if (def.flipX || def.flipY) {
           const w = def.tileImg.width;
           const h = def.tileImg.height;
           const g = p.createGraphics(w, h);
           g.noSmooth();
           g.push();
-          g.translate(w, 0);
-          g.scale(-1, 1);
+          g.translate(def.flipX ? w : 0, def.flipY ? h : 0);
+          g.scale(def.flipX ? -1 : 1, def.flipY ? -1 : 1);
           g.image(def.tileImg, 0, 0);
           g.pop();
           def.tileImg = g;
@@ -297,7 +315,13 @@ new p5((p) => {
         // sprite for the current brush kind
         function naturalWidth(kind) {
           const t = TILES[kind];
-          return t.method === 'single' ? t.tile.w * (t.scale ?? 4) : BRUSH_W;
+          if (!t) return 0;
+
+          if (t.method === 'single') {
+            const baseW = t.rot90 ? t.tile.h : t.tile.w;
+            return baseW * (t.scale ?? 4);
+          }
+          return BRUSH_W;
         }
         // const strip = level.getStrip(getBrushKind(), BRUSH_W);
 
@@ -314,6 +338,8 @@ new p5((p) => {
 
       updateTutorial(); // update tutorial state
       updateStory(); // update story markers
+
+      const hasTargetLen = (fs) => player.maxLen >= fs.targetLen - 0.01;
 
       /* ---------- Fail-State progression ---------- */
       if (failIndex < FAIL_STATES.length) {
@@ -340,8 +366,13 @@ new p5((p) => {
             checkpointHit = false; // reset for next fail-state
           }
         } else if (player.pos.y <= fs.topBoundY) {
+          // if (hasTargetLen(fs)) {
+          //   failIndex++; // player earned this earlier; skip it
+          //   checkpointHit = false;
+          //   return;
+          // }
           // If player finds a way to climb above the checkpoint without long-arm
-          if (!player.longArmUnlocked) {
+          if (!player.maxLen) {
             player.unlockLongArm(fs.targetLen);
             story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
             failIndex++;
@@ -416,8 +447,16 @@ new p5((p) => {
       let yTop = brushStart.y;
       const kind = getBrushKind();
       const spec = TILES[kind] ?? {};
-      const wPix =
-        spec.method === 'single' ? spec.tile.w * (spec.scale ?? 4) : BRUSH_W;
+
+      let wPix;
+      if (spec.method === 'single') {
+        const baseW = spec.rot90 ? spec.tile.h : spec.tile.w;
+        wPix = baseW * (spec.scale ?? 4);
+      } else {
+        wPix = BRUSH_W;
+      }
+      // const wPix =
+      //   spec.method === 'single' ? baseW * (spec.scale ?? 4) : BRUSH_W;
       const hit = 'hit' in spec ? spec.hit : HIT; // If hit is 0 it's not latchable
 
       let hArt = 64;
@@ -477,15 +516,20 @@ new p5((p) => {
     level.addPlatform(320, 256, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(448, 128, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(448, 0, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(180, -128, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(192, -384, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(256, -128, 64, 32, 32, false, 'tinyGrass');
+    // level.addPlatform(180, -128, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(192, -320, 64, 32, 64, false, 'tinyGrass');
 
     // Stone Wall with grass patches 1
+    level.addPlatform(320, -512, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(320, -576, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(320, -640, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(320, -704, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(256, -544, 16, 32, 32, false, 'grassySurfaceR');
-    level.addPlatform(256, -576, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(320, -448, 32, 16, 16, false, 'grassySurfaceT');
+    level.addPlatform(320, -448, 32, 16, 16, false, 'grassySurfaceTR');
+    // level.addPlatform(256, -544, 16, 32, 32, false, 'grassySurfaceR');
+    // level.addPlatform(256, -576, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(576, -320, 64, 32, 32, false, 'tinyGrass');
     level.addPlatform(512, -512, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(384, -704, 16, 32, 32, false, 'grassySurfaceL');
 
@@ -746,6 +790,16 @@ new p5((p) => {
       if (e.key === 'v') {
         brushHalf ^= 1;
         console.log('Brush half:', brushHalf ? 'BOTTOM' : 'TOP');
+      }
+      if (e.key === 'x') {
+        // NEW ⇆ toggle
+        const cur = getBrushKind();
+        const other = cur.endsWith('R') ? cur.slice(0, -1) : cur + 'R';
+        const idx = brushKinds.indexOf(other);
+        if (idx !== -1) {
+          brushIndex = idx; // swap brush
+          console.log('Brush side →', other);
+        }
       }
     }
   };

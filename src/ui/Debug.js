@@ -169,9 +169,9 @@ export function drawLaneBounds(p, playW) {
 
 export function drawHitboxes(p, level) {
   p.push();
-  p.fill(0, 255, 255, 50);
+  p.fill(0, 130, 255, 70);
   p.strokeWeight(6);
-  p.stroke(0, 255, 255, 50);
+  p.stroke(0, 255, 0, 50);
   for (const r of level.platforms) {
     p.rect(r.x, r.y, r.w, r.hHit);
   }

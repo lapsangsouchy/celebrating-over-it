@@ -26,7 +26,7 @@ export class Player {
     this.lastMouse = p.createVector(0, 0); // remember where freeze began
 
     /* upgrades */
-    this.longArmUnlocked = false; // true when player unlocks long arm
+    // this.longArmUnlocked = false; // true when player unlocks long arm
     this.armSegments = [];
     this.totalArmLen = 120; // Base of arm from beginning of game
     this.palette = [
@@ -52,9 +52,12 @@ export class Player {
 
   /* ---------- UPGRADES / POWER-UPS ---------- */
   unlockLongArm(len) {
-    if (this.longArmUnlocked) return; // guard
-    if (len > this.maxLen) this.gainReach(len - this.maxLen);
-    this.longArmUnlocked = true;
+    // if (this.longArmUnlocked) return; // guard
+    // if (len > this.maxLen) this.gainReach(len - this.maxLen);
+    // this.longArmUnlocked = true;
+    if (len > this.maxLen) {
+      this.gainReach(len - this.maxLen);
+    }
   }
 
   /* ---------- math helpers ---------- */

@@ -59,6 +59,54 @@ export const TILES = {
     align: 'right',
   },
 
+  /* ---------- 32 × 16 grassy ledges (horizontal) ---------- */
+  grassySurfaceT: {
+    // top-left half-cell
+    tile: { x: 32, y: 288, w: 4, h: 8 },
+    scale: 4,
+    method: 'single',
+    rot90: true, // rotate 90° clockwise (so width → 32 px)
+    hit: 16, // collision depth matches sprite height
+    art: 16,
+    snapW: false,
+  },
+  grassySurfaceTR: {
+    // top-right
+    tile: { x: 32, y: 288, w: 4, h: 8 },
+    scale: 4,
+    method: 'single',
+    rot90: true,
+    flipX: true, // mirror so grass blades face left
+    hit: 16,
+    art: 16,
+    snapW: false,
+    align: 'right', // shove into right-hand 32 px of the cell
+  },
+  grassySurfaceB: {
+    // bottom-left
+    tile: { x: 32, y: 288, w: 4, h: 8 },
+    scale: 4,
+    method: 'single',
+    rot90: true,
+    flipY: true, // blades point down
+    hit: 16,
+    art: 16,
+    snapW: false,
+  },
+  grassySurfaceBR: {
+    // bottom-right  ← the error case
+    tile: { x: 32, y: 288, w: 4, h: 8 },
+    scale: 4,
+    method: 'single',
+    rot90: true,
+    flipX: true,
+    flipY: true,
+    hit: 16,
+    art: 16,
+    snapW: false,
+    align: 'right',
+  },
+
   /* add more here ↓ */
   // stone:     { x: 32,  y: 296, w:16, h:16, scale: 4, method: 'repeat' },
 };

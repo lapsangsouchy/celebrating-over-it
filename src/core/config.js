@@ -5,7 +5,7 @@ export const FAIL_STATES = [
     // 0 ► Long Arm
     name: 'longArm',
     checkpointY: 0, // stand here first…
-    topBoundY: -256, // …then climb above this OR
+    topBoundY: -192, // …then climb above this OR
     bottomBoundY: 256, //    fall below this to trigger
     targetLen: 162, // final length
     stepLen: (162 - 120) / 3, // arm pixel increase every fall
@@ -16,9 +16,9 @@ export const FAIL_STATES = [
   {
     // 1 ► Movement+Jump   (todo)
     name: 'swingWall',
-    checkpointY: -320,
-    topBoundY: -640,
-    bottomBoundY: -192,
+    checkpointY: -832,
+    topBoundY: -1088,
+    bottomBoundY: -256,
     targetLen: 201,
     stepLen: (201 - 162) / 3,
     unlock: (player) => {
@@ -28,15 +28,15 @@ export const FAIL_STATES = [
     toastUnlock: 'ARM_UNLOCK',
   },
   {
-    // 2 ► Attack          (todo)
-    name: 'attackUpgrade',
-    checkpointY: -1600,
-    topBoundY: -1856,
-    bottomBoundY: -1344,
-    message: (playerName) => 'TODO: Alex can now smash obstacles!',
-    unlock: (player) => {
-      /* add later */
-    },
+    // // 2 ► Attack          (todo)
+    // name: 'attackUpgrade',
+    // checkpointY: -1600,
+    // topBoundY: -1856,
+    // bottomBoundY: -1344,
+    // message: (playerName) => 'TODO: Alex can now smash obstacles!',
+    // unlock: (player) => {
+    //   /* add later */
+    // },
   },
 ];
 

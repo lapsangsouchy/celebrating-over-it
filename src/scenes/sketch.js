@@ -26,6 +26,8 @@ import {
   drawArmLenHUD,
 } from '../ui/Debug.js';
 
+import { VolumeControl } from '../ui/VolumeControl.js';
+
 import Background from '../systems/Background.js';
 
 import * as viewport from '../ui/viewport.js';
@@ -93,6 +95,7 @@ new p5((p) => {
 
   /* ----------- Music ------------------ */
   let bgMusic;
+  let volCtrl;
   const VOLUME_STEPS = [0, 0.5, 1];
   let volIndex = 1;
 
@@ -248,6 +251,14 @@ new p5((p) => {
     player.reset(playW * 0.15, GROUND_Y - player.r);
 
     camera = new Camera(p, player);
+
+    // Speaker icon 16px from top right gutter
+    const iconX = p.width - 32 - 32;
+    const iconY = 16;
+
+    volCtrl = new VolumeControl(p, iconX, iconY, [bgMusic]);
+
+    volCtrl.setVolume(0.5); // default volume
   };
 
   p.draw = () => {
@@ -409,11 +420,12 @@ new p5((p) => {
         p.rect(worldRightScreenX, 0, p.width - worldRightScreenX, p.height);
       }
       debugOverlay(); // show / hide the Reset-Cookies button
+
       if (!bgMusic.isPlaying()) {
-        bgMusic.setVolume(VOLUME_STEPS[volIndex]);
-        bgMusic.loop();
+        bgMusic.setVolume(volCtrl.volume);
+        bgMusic.loop(); // loop background music
       }
-      drawVolumeBtn();
+      volCtrl.draw();
     }
   };
 
@@ -451,7 +463,12 @@ new p5((p) => {
       return;
     }
     player.tryLatch();
-    if (!Debug.brush) return;
+    p.userStartAudio();
+    volCtrl.mousePressed(p.mouseX, p.mouseY); // check volume control
+  };
+
+  p.mouseDragged = () => {
+    volCtrl.mouseDragged(p.mouseX, p.mouseY); // check volume control
   };
 
   p.mouseReleased = () => {
@@ -483,8 +500,8 @@ new p5((p) => {
       brushStart = null;
       return;
     }
-
     player.release();
+    volCtrl.mouseReleased();
   };
 
   /* ---------- window resize ---------- */
@@ -495,6 +512,9 @@ new p5((p) => {
     calcLayout();
     bg = new Background(WORLD_H, viewport.WORLD.w, p); // rebuild to new width
     level.playW = playW; // update spacing helper
+
+    volCtrl.x = p.width - 16 - volCtrl.size;
+    volCtrl.y = 16;
   };
 
   /* ---------- helper functions ---------- */
@@ -518,60 +538,109 @@ new p5((p) => {
       'groundFill'
     );
 
-    // level.addPlatform(450, 250, 50, 32, 70, false, 'tinyGrass');
-
-    // level.addPlatform(320, 128, 64, 32, 64, false, 'tinyGrass');
-    // level.addPlatform(384, 0, 64, 32, 64, false, 'tinyGrass');
-    // level.addPlatform(576, -128, 64, 32, 64, false, 'tinyGrass');
-    // level.addPlatform(320, -320, 64, 32, 64, false, 'tinyGrass');
-    // level.addPlatform(128, -512, 64, 32, 64, false, 'tinyGrass');
-    // level.addPlatform(384, -640, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(512, 256, 64, 32, 32, false, 'tinyGrass');
-    // level.addPlatform(320, 256, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(448, 128, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(448, 0, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(256, -128, 64, 32, 32, false, 'tinyGrass');
-    // level.addPlatform(180, -128, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(192, -320, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(448, -192, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(576, -320, 64, 32, 32, false, 'tinyGrass');
+    level.addPlatform(384, -448, 64, 32, 32, false, 'tinyGrass');
+    level.addPlatform(320, -448, 64, 32, 32, false, 'tinyGrass');
+    level.addPlatform(192, -576, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(192, -768, 64, 32, 32, false, 'tinyGrass');
 
     // Stone Wall with grass patches 1
-    level.addPlatform(320, -512, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(320, -576, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(320, -640, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(320, -704, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(320, -448, 32, 16, 16, false, 'grassySurfaceT');
-    level.addPlatform(320, -448, 32, 16, 16, false, 'grassySurfaceTR');
-    // level.addPlatform(256, -544, 16, 32, 32, false, 'grassySurfaceR');
-    // level.addPlatform(256, -576, 16, 32, 32, false, 'grassySurfaceR');
-    level.addPlatform(576, -320, 64, 32, 32, false, 'tinyGrass');
-    // level.addPlatform(512, -512, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(512, -576, 64, 32, 32, false, 'tinyGrass');
-    level.addPlatform(384, -704, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(320, -960, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -1024, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -1088, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -1152, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -896, 32, 16, 16, false, 'grassySurfaceT');
+    level.addPlatform(320, -896, 32, 16, 16, false, 'grassySurfaceTR');
+    level.addPlatform(576, -768, 64, 32, 32, false, 'tinyGrass');
+    level.addPlatform(512, -1024, 64, 32, 32, false, 'tinyGrass');
+    level.addPlatform(384, -1152, 16, 32, 32, false, 'grassySurfaceL');
 
     // Stone Separator -> onto fail state #2
-    level.addPlatform(128, -832, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(576, -960, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(512, -960, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(448, -960, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(384, -960, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(320, -960, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(256, -960, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(192, -960, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(128, -1152, 64, 32, 64, false, 'tinyGrass');
+
+    level.addPlatform(192, -1344, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1408, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1472, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1536, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -1344, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -1408, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -1472, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -1536, 64, 64, 64, false, 'stoneBlock');
+
+    level.addPlatform(320, -1344, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(320, -1312, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(320, -1376, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(320, -1408, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(320, -1472, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(320, -1440, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(320, -1504, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(320, -1536, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(256, -1536, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(256, -1504, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(256, -1440, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(256, -1472, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(256, -1408, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(256, -1376, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(256, -1312, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(256, -1344, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(384, -1600, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -1664, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -1728, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -1792, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1792, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1664, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1728, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1600, 64, 64, 64, false, 'stoneBlock');
+
+    level.addPlatform(320, -1568, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(320, -1600, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(320, -1664, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(320, -1632, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(320, -1696, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(320, -1728, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(320, -1792, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(320, -1760, 16, 32, 32, false, 'grassySurfaceR');
+
+    level.addPlatform(256, -1760, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(256, -1792, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(256, -1728, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(256, -1696, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(256, -1632, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(256, -1664, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(256, -1600, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(256, -1568, 16, 32, 32, false, 'grassySurfaceL');
+
+    level.addPlatform(576, -2000, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(512, -2000, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(448, -2000, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -2000, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -2000, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(256, -2000, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -2000, 64, 64, 64, false, 'stoneBlock');
   }
-
-  // function drawCenteredToast(txt, alpha = 255) {
-  //   const txtOffset = player.r + 20; // offset below player
-
-  //   p.push();
-  //   p.textAlign(p.CENTER, p.TOP);
-  //   p.textFont('monospace');
-  //   p.textSize(18);
-  //   p.fill(255, alpha);
-  //   p.stroke(0, alpha);
-  //   p.strokeWeight(4);
-  //   p.text(txt, p.width / 3, player.pos.y + txtOffset);
-  //   p.pop();
-  // }
 
   function resetGame() {
     camera.reset();
@@ -780,63 +849,6 @@ new p5((p) => {
       player.pos.y + txtOffset
     ); // world coords → scrolls w/ cam
     p.pop();
-  }
-
-  /* ─────────────────────────────────────── */
-  /*  UI helpers                            */
-  /* ─────────────────────────────────────── */
-
-  function volumeBtnRect() {
-    // pixel X where the world lane ends and gutter starts
-    const gutterX = viewport.WORLD.w * viewport.s; // already used for the purple strip
-    const gutterW = p.width - gutterX;
-    const size = 32;
-    return {
-      // screen-space rectangle
-      x: gutterX + gutterW / 2 - size / 2,
-      y: 20,
-      w: size,
-      h: size,
-    };
-  }
-
-  function drawVolumeBtn() {
-    const { x, y, w, h } = volumeBtnRect();
-
-    // button background
-    p.push();
-    p.noStroke();
-    p.fill(40, 180);
-    p.rect(x, y, w, h, 6);
-
-    // icon
-    p.stroke(255);
-    p.strokeWeight(2);
-
-    if (VOLUME_STEPS[volIndex] === 0) {
-      // muted → little “X”
-      p.line(x + 8, y + 8, x + w - 8, y + h - 8);
-      p.line(x + 8, y + h - 8, x + w - 8, y + 8);
-    } else {
-      // speaker cone
-      p.fill(255);
-      p.triangle(x + 8, y + 10, x + 8, y + h - 10, x + 14, y + h / 2);
-
-      // sound waves
-      p.noFill();
-      if (VOLUME_STEPS[volIndex] >= 0.5) {
-        p.arc(x + 18, y + h / 2, 12, 12, -p.PI / 4, p.PI / 4);
-      }
-      if (VOLUME_STEPS[volIndex] > 0.5) {
-        p.arc(x + 23, y + h / 2, 16, 16, -p.PI / 4, p.PI / 4);
-      }
-    }
-    p.pop();
-  }
-
-  /* use this from anywhere (fail-state unlock, upgrades, etc.) */
-  function storyPop(txt) {
-    storyPopup = { txt, alpha: 255 };
   }
 
   window.p = p;

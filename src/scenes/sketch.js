@@ -526,7 +526,8 @@ new p5((p) => {
     // level.addPlatform(320, -320, 64, 32, 64, false, 'tinyGrass');
     // level.addPlatform(128, -512, 64, 32, 64, false, 'tinyGrass');
     // level.addPlatform(384, -640, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(320, 256, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(512, 256, 64, 32, 32, false, 'tinyGrass');
+    // level.addPlatform(320, 256, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(448, 128, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(448, 0, 64, 32, 64, false, 'tinyGrass');
     level.addPlatform(256, -128, 64, 32, 32, false, 'tinyGrass');
@@ -543,7 +544,8 @@ new p5((p) => {
     // level.addPlatform(256, -544, 16, 32, 32, false, 'grassySurfaceR');
     // level.addPlatform(256, -576, 16, 32, 32, false, 'grassySurfaceR');
     level.addPlatform(576, -320, 64, 32, 32, false, 'tinyGrass');
-    level.addPlatform(512, -512, 64, 32, 64, false, 'tinyGrass');
+    // level.addPlatform(512, -512, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(512, -576, 64, 32, 32, false, 'tinyGrass');
     level.addPlatform(384, -704, 16, 32, 32, false, 'grassySurfaceL');
 
     // Stone Separator -> onto fail state #2
@@ -784,12 +786,13 @@ new p5((p) => {
   /*  UI helpers                            */
   /* ─────────────────────────────────────── */
 
-  // pixel coords for the button based on current canvas & gutter
   function volumeBtnRect() {
-    const gutterX = viewport.WORLD.w * viewport.s; // left edge of gutter
+    // pixel X where the world lane ends and gutter starts
+    const gutterX = viewport.WORLD.w * viewport.s; // already used for the purple strip
     const gutterW = p.width - gutterX;
-    const size = 32; // square button
+    const size = 32;
     return {
+      // screen-space rectangle
       x: gutterX + gutterW / 2 - size / 2,
       y: 20,
       w: size,
@@ -799,22 +802,28 @@ new p5((p) => {
 
   function drawVolumeBtn() {
     const { x, y, w, h } = volumeBtnRect();
-    p.push();
-    p.stroke(0, 50); // subtle outline
-    p.fill(40, 180); // dark translucent bg
-    p.rect(x, y, w, h, 6);
-    p.noStroke();
-    p.fill(255);
 
-    // icon changes with volume level
+    // button background
+    p.push();
+    p.noStroke();
+    p.fill(40, 180);
+    p.rect(x, y, w, h, 6);
+
+    // icon
+    p.stroke(255);
+    p.strokeWeight(2);
+
     if (VOLUME_STEPS[volIndex] === 0) {
-      // muted (simple “X”)
+      // muted → little “X”
       p.line(x + 8, y + 8, x + w - 8, y + h - 8);
       p.line(x + 8, y + h - 8, x + w - 8, y + 8);
     } else {
       // speaker cone
+      p.fill(255);
       p.triangle(x + 8, y + 10, x + 8, y + h - 10, x + 14, y + h / 2);
-      // arcs → one bar = medium, two bars = loud
+
+      // sound waves
+      p.noFill();
       if (VOLUME_STEPS[volIndex] >= 0.5) {
         p.arc(x + 18, y + h / 2, 12, 12, -p.PI / 4, p.PI / 4);
       }

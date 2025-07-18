@@ -31,7 +31,7 @@ export const COPY = {
   TOASTS: {
     ARM_STEP: (n) => `${n} stretched a little further…`,
     ARM_UNLOCK: (n) =>
-      `${n} realized they could reach\n` + 'even further than before!.',
+      `${n} realized they could reach\n` + 'even further than before!',
   },
 };
 

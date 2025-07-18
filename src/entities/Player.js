@@ -9,6 +9,7 @@ export class Player {
     this.p = p; // store the p5 instance
     this.level = level; // need it for collisions
     this.getCamY = getCamY; // for mouse world coords
+    this.getRightGutter = getRightGutter; // function to get right gutter width
 
     this.r = 24;
     this.pos = p.createVector(0, 0); // you’ll set a real x,y outside
@@ -40,9 +41,6 @@ export class Player {
 
     /* face? */
     this.face = null;
-
-    /* helper for right gutter */
-    this.getRightGutter = getRightGutter; // function to get right gutter width
   }
 
   /* ---------- FACE HELPER ---------- */
@@ -68,9 +66,10 @@ export class Player {
     );
   }
   armBase() {
+    const dir = this.armDir();
     return this.p.createVector(
-      this.pos.x + this.armDir().x * this.r,
-      this.pos.y + this.armDir().y * this.r
+      this.pos.x + dir.x * this.r,
+      this.pos.y + dir.y * this.r
     );
   }
   armTip() {
@@ -308,7 +307,17 @@ export class Player {
       targetPos.y - this.pos.y
     );
 
-    this.pos.add(correction);
+    // break it into mini-steps to catch collisions
+    const STEPS = 5;
+    const sub = p5.Vector.mult(correction, 1 / STEPS);
+    for (let i = 0; i < STEPS; i++) {
+      this.pos.add(sub);
+      this.level.platforms.forEach((r) => this.collideRect(r));
+
+      this.collideWall(); // prevent going into the right gutter
+    }
+
+    // remove radial velocity so you don't ping off axis
 
     const radialVel = this.vel.dot(dir); // projection onto rope
     this.vel.sub(dir.copy().mult(radialVel));
@@ -332,11 +341,26 @@ export class Player {
       //   if (!this.latched && delta.y < 0) this.vel.y = 0; // landed on top
       //   else this.vel.add(delta); // slide
 
-      if (!this.latched && delta.y < 0) {
-        this.vel.y = 0; // standing on top
-        this.vel.x *= 0.3; // slow down on landing
-      } else if (!this.latched) {
-        this.vel.add(delta); // slide / bounce only when free
+      // if (!this.latched && delta.y < 0) {
+      //   this.vel.y = 0; // standing on top
+      //   this.vel.x *= 0.3; // slow down on landing
+      // } else if (!this.latched) {
+      //   this.vel.add(delta); // slide / bounce only when free
+      // }
+      if (delta.y < 0) {
+        // hitting top of platform
+        this.vel.y = 0;
+        if (!this.latched) {
+          this.vel.x *= 0.3; // slow down on landing
+        }
+      } else {
+        //side of bottom hit
+        if (!this.latched) {
+          this.vel.add(delta);
+        } else {
+          // damped any residual slide when latched
+          this.vel.mult(0.9);
+        }
       }
     }
   }
@@ -357,6 +381,23 @@ export class Player {
       if (this.vel.x > 0) {
         this.vel.x = 0; // stop sliding
       }
+    }
+  }
+
+  /**
+   * Prevent the player from ever going into the right‐hand gutter wall.
+   */
+  collideWall() {
+    // world-space X of the inner face of the wall:
+    const innerX = viewport.WORLD.w - this.getRightGutter();
+    const over = this.pos.x + this.r - innerX;
+
+    if (over > 0) {
+      // 1) push back out by the overlap amount
+      this.pos.x -= over;
+
+      // 2) zero out any positive x‐velocity so you don't ping off
+      if (this.vel.x > 0) this.vel.x = 0;
     }
   }
 

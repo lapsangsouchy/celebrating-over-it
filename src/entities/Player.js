@@ -4,6 +4,58 @@ import { EDGE_TOL, CLIFF_W } from '../core/config.js';
 import { projectToEdge, nearestEdgePoint } from '../systems/Level.js';
 
 const STIFFNESS = 0.25; // 0 → jelly, 1 → instant lock
+
+/**
+ * Raycast a moving circle (a→b) against an AABB expanded by radius r.
+ * @param {p5.Vector} a      Start point
+ * @param {p5.Vector} b      End point
+ * @param {object}    rect   { x, y, w, hHit }
+ * @param {number}    r      Circle radius
+ * @returns {number|null}    t in [0,1] of first impact, or null if none
+ */
+function segmentRectTOI(a, b, rect, r) {
+  // 1) expanded bounds
+  const minX = rect.x - r;
+  const maxX = rect.x + rect.w + r;
+  const minY = rect.y - r;
+  const maxY = rect.y + rect.hHit + r;
+
+  // 2) movement vector
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+
+  let tEnter = 0;
+  let tExit = 1;
+
+  // X‐slab
+  if (dx === 0) {
+    if (a.x < minX || a.x > maxX) return null;
+  } else {
+    const tx1 = (minX - a.x) / dx;
+    const tx2 = (maxX - a.x) / dx;
+    const txMin = Math.min(tx1, tx2);
+    const txMax = Math.max(tx1, tx2);
+    tEnter = Math.max(tEnter, txMin);
+    tExit = Math.min(tExit, txMax);
+    if (tEnter > tExit) return null;
+  }
+
+  // Y‐slab
+  if (dy === 0) {
+    if (a.y < minY || a.y > maxY) return null;
+  } else {
+    const ty1 = (minY - a.y) / dy;
+    const ty2 = (maxY - a.y) / dy;
+    const tyMin = Math.min(ty1, ty2);
+    const tyMax = Math.max(ty1, ty2);
+    tEnter = Math.max(tEnter, tyMin);
+    tExit = Math.min(tExit, tyMax);
+    if (tEnter > tExit) return null;
+  }
+
+  // if the entry time is within [0,1], we hit
+  return tEnter >= 0 && tEnter <= 1 ? tEnter : null;
+}
 export class Player {
   constructor(
     p,
@@ -199,43 +251,101 @@ export class Player {
     const p = this.p; // one‑letter alias keeps code short
     const mw = this.getMouseWorld();
 
-    /* ----- stay perfectly still until player wiggles mouse ----- */
-    if (this.latched && this.frozen) {
-      if (
-        this.p.mouseX !== this.lastMouse.x ||
-        this.p.mouseY !== this.lastMouse.y
-      ) {
-        this.frozen = false; // un-freeze on first movement
-      } else {
-        this.applyAnchorConstraint(); // keep body snapped to anchor
-        return; // skip ALL further physics
-      }
-    }
+    // /* ----- stay perfectly still until player wiggles mouse ----- */
+    // if (this.latched && this.frozen) {
+    //   if (
+    //     this.p.mouseX !== this.lastMouse.x ||
+    //     this.p.mouseY !== this.lastMouse.y
+    //   ) {
+    //     this.frozen = false; // un-freeze on first movement
+    //   } else {
+    //     this.applyAnchorConstraint(); // keep body snapped to anchor
+    //     return; // skip ALL further physics
+    //   }
+    // }
 
     this.armAngle = p.atan2(mw.y - this.pos.y, mw.x - this.pos.x);
 
-    /* rope length changes while holding mouse */
-    if (this.latched && p.mouseIsPressed) {
-      const raw = p.dist(mw.x, mw.y, this.anchor.x, this.anchor.y) - this.r;
-      const targetLen = p.constrain(raw, MIN_LEN, this.maxLen);
-      this.ropeLen += (targetLen - this.ropeLen) * 0.25; // easing
+    // ————————————— LATched MODE —————————————
+    if (this.latched) {
+      // 1) handle the “freeze until mouse moves” state
+      if (this.frozen) {
+        if (p.mouseX !== this.lastMouse.x || p.mouseY !== this.lastMouse.y) {
+          this.frozen = false;
+        }
+        this.applyAnchorConstraint();
+        return;
+      }
+
+      // 2) once unfrozen, allow rope‐length adjust on drag
+      if (p.mouseIsPressed) {
+        const raw = p.dist(mw.x, mw.y, this.anchor.x, this.anchor.y) - this.r;
+        const targetLen = p.constrain(raw, MIN_LEN, this.maxLen);
+        this.ropeLen += (targetLen - this.ropeLen) * 0.25;
+      }
+
+      // 3) enforce rope constraint every frame, then skip free physics
+      this.applyAnchorConstraint();
+      return;
     }
 
     // physics
+
+    // physics with sub-steps to prevent tunneling
     if (this.freeze > 0) {
       this.freeze--;
     } else {
-      /* normal physics */
+      // 1) integrate gravity & friction once
       this.vel.y += GRAVITY;
       this.vel.mult(FRICTION);
-      this.pos.add(this.vel);
+
+      // 2) true top-only sweep clamp
+      const oldPos = this.pos.copy();
+      const nextPos = this.p.createVector(
+        oldPos.x + this.vel.x,
+        oldPos.y + this.vel.y
+      );
+      const mv = p5.Vector.sub(nextPos, oldPos);
+
+      // only if moving mostly downward
+      if (mv.y > 0 && Math.abs(mv.y) > Math.abs(mv.x)) {
+        const oldBottom = oldPos.y + this.r;
+        const nextBottom = nextPos.y + this.r;
+        const EPS = 0.01;
+
+        for (const r of this.level.platforms) {
+          // require start above and end below the platform’s top edge
+          if (
+            oldBottom <= r.y &&
+            nextBottom >= r.y &&
+            // and horizontally overlapping when you land
+            nextPos.x >= r.x &&
+            nextPos.x <= r.x + r.w
+          ) {
+            const toi = segmentRectTOI(oldPos, nextPos, r, this.r);
+            if (toi !== null && toi > EPS && toi < 1) {
+              // clamp at impact and stop vertical velocity
+              this.pos = p5.Vector.lerp(oldPos, nextPos, toi * 0.99);
+              this.vel.y = 0;
+              break;
+            }
+          }
+        }
+      }
+
+      // free‐motion micro-steps to catch thin platforms
+      const maxStep = this.r * 0.5;
+      const dist = this.vel.mag();
+      const steps = Math.ceil(dist / maxStep) || 1;
+      for (let i = 0; i < steps; i++) {
+        this.pos.x += this.vel.x / steps;
+        this.pos.y += this.vel.y / steps;
+        this.level.platforms.forEach((r) => this.collideRect(r));
+        this.constrainToLane();
+      }
     }
-    // collisions
-    this.level.platforms.forEach((r) => this.collideRect(r));
 
-    // finally, stop at the gutters
-    this.constrainToLane();
-
+    // finally, if we’re latched, apply the rope constraint
     if (this.latched) this.applyAnchorConstraint();
   }
 
@@ -332,25 +442,18 @@ export class Player {
       targetBase.x - dir.x * this.r,
       targetBase.y - dir.y * this.r
     );
-    const correction = this.p.createVector(
-      targetPos.x - this.pos.x,
-      targetPos.y - this.pos.y
-    );
-
-    // break it into mini-steps to catch collisions
-    const STEPS = 5;
-    const sub = p5.Vector.mult(correction, 1 / STEPS);
-    for (let i = 0; i < STEPS; i++) {
-      this.pos.add(sub);
-      this.level.platforms.forEach((r) => this.collideRect(r));
-
-      this.collideWall(); // prevent going into the right gutter
-
-      if (this.pos.x < this.r) {
-        this.pos.x = this.r;
-        if (this.vel.x < 0) {
-          this.vel.x = 0;
-        }
+    // dynamic sub-steps
+    const correction = p5.Vector.sub(targetPos, this.pos);
+    const mag = correction.mag();
+    if (mag > 0) {
+      const maxStep = this.r * 0.5;
+      const steps = Math.ceil(mag / maxStep);
+      const sub = correction.copy().div(steps);
+      for (let i = 0; i < steps; i++) {
+        this.pos.add(sub);
+        this.level.platforms.forEach((r) => this.collideRect(r));
+        this.constrainToLane();
+        this.collideWall();
       }
     }
 
@@ -376,15 +479,7 @@ export class Player {
 
       if (d == 0) delta.set(0, -overlap);
       this.pos.add(delta);
-      //   if (!this.latched && delta.y < 0) this.vel.y = 0; // landed on top
-      //   else this.vel.add(delta); // slide
 
-      // if (!this.latched && delta.y < 0) {
-      //   this.vel.y = 0; // standing on top
-      //   this.vel.x *= 0.3; // slow down on landing
-      // } else if (!this.latched) {
-      //   this.vel.add(delta); // slide / bounce only when free
-      // }
       if (delta.y < 0) {
         // hitting top of platform
         this.vel.y = 0;
@@ -392,9 +487,12 @@ export class Player {
           this.vel.x *= 0.3; // slow down on landing
         }
       } else {
-        //side of bottom hit
+        //side or bottom hit
+        // this.vel.add(delta);
+        if (this.vel.y < 0) this.vel.y = 0;
         if (!this.latched) {
-          this.vel.add(delta);
+          // this.vel.add(delta);
+          this.vel.x *= 0.8;
         } else {
           // damped any residual slide when latched
           this.vel.mult(0.9);

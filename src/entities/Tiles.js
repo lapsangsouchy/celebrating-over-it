@@ -25,6 +25,7 @@ export const TILES = {
     taper: { x: 96, y: 328, w: 8, h: 16 }, // 8×16 semi-transparent edge
     scale: 4,
     method: 'cliff', // <-- new method tag
+    noLatch: true, // no latching on this surface
   },
 
   /* ---------- NEW NON-LATCHABLE STONE BLOCK ---------- */

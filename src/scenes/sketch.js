@@ -95,9 +95,15 @@ new p5((p) => {
 
   /* ----------- Music ------------------ */
   let bgMusic;
+  /* ----------- SFX -------------------- */
+  let sfx = {
+    grassGrabSnd: null,
+    stoneGrabSnd: null,
+    grassLandSnd: null,
+    stoneLandSnd: null,
+  };
+  // let grassGrabSnd, stoneGrabSnd, grassLandSnd, stoneLandSnd;
   let volCtrl;
-  const VOLUME_STEPS = [0, 0.5, 1];
-  let volIndex = 1;
 
   /* ---------- p5.js preload ---------- */
 
@@ -105,6 +111,20 @@ new p5((p) => {
     atlas = p.loadImage(new URL('../assets/tilemap.png', import.meta.url).href);
     bgMusic = p.loadSound(
       new URL('../assets/OverTheClover.m4a', import.meta.url).href
+    );
+
+    // SFX
+    sfx.grassGrabSnd = p.loadSound(
+      new URL('../assets/sfx/grassLand.ogg', import.meta.url).href
+    );
+    sfx.stoneGrabSnd = p.loadSound(
+      new URL('../assets/sfx/stonesHit1.ogg', import.meta.url).href
+    );
+    sfx.grassLandSnd = p.loadSound(
+      new URL('../assets/sfx/grassLand.ogg', import.meta.url).href
+    );
+    sfx.stoneLandSnd = p.loadSound(
+      new URL('../assets/sfx/stoneHit5.ogg', import.meta.url).href
     );
   };
 
@@ -246,7 +266,9 @@ new p5((p) => {
       p,
       level,
       () => camera.camY,
-      () => rightGutter
+      () => rightGutter,
+      volCtrl,
+      sfx
     );
     player.reset(playW * 0.15, GROUND_Y - player.r);
 
@@ -256,7 +278,15 @@ new p5((p) => {
     const iconX = p.width - 32 - 32;
     const iconY = 16;
 
-    volCtrl = new VolumeControl(p, iconX, iconY, [bgMusic]);
+    volCtrl = new VolumeControl(p, iconX, iconY, [
+      bgMusic,
+      sfx.grassGrabSnd,
+      sfx.stoneGrabSnd,
+      sfx.grassLandSnd,
+      sfx.stoneLandSnd,
+    ]);
+
+    // console.log(sfx);
 
     volCtrl.setVolume(0.5); // default volume
   };

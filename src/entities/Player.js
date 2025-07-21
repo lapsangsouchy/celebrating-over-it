@@ -5,7 +5,14 @@ import { projectToEdge, nearestEdgePoint } from '../systems/Level.js';
 
 const STIFFNESS = 0.25; // 0 → jelly, 1 → instant lock
 export class Player {
-  constructor(p, level, getCamY, getRightGutter = () => CLIFF_W) {
+  constructor(
+    p,
+    level,
+    getCamY,
+    getRightGutter = () => CLIFF_W,
+    volumeControl,
+    sounds
+  ) {
     this.p = p; // store the p5 instance
     this.level = level; // need it for collisions
     this.getCamY = getCamY; // for mouse world coords
@@ -41,6 +48,10 @@ export class Player {
 
     /* face? */
     this.face = null;
+
+    // Audio Properties
+    this.volCtrl = volumeControl;
+    this.sfx = sounds;
   }
 
   /* ---------- FACE HELPER ---------- */
@@ -89,6 +100,13 @@ export class Player {
         this.pos.x + dir.x * (len + step),
         this.pos.y + dir.y * (len + step)
       );
+      const innerX = viewport.WORLD.w - this.getRightGutter();
+      if (probe.x > innerX) {
+        stop = len;
+        // anchor on the wall edge
+        this.anchor = this.p.createVector(innerX, probe.y);
+        break;
+      }
       if (this.level.isInsideRect(probe)) {
         stop = len; // stop at edge
 
@@ -251,23 +269,35 @@ export class Player {
     let tip = this.armTip(); // calculate tip position
 
     /* 1. Find the FIRST rectangle that already contains the tip */
-    let anchor = null;
+
     for (const r of this.level.platforms) {
-      if (r.latchable === false) continue;
       const top = r.y - EDGE_TOL;
       const bottom = r.y + (r.hHit ?? r.h) + EDGE_TOL;
       const left = r.x - EDGE_TOL;
       const right = r.x + r.w + EDGE_TOL;
 
       if (tip.x >= left && tip.x <= right && tip.y >= top && tip.y <= bottom) {
+        if (r.latchable === false) {
+          this.sfx.stoneGrabSnd.play();
+          this.sfx.stoneGrabSnd.rate(4);
+          break;
+        }
         /* — v4 behaviour: anchor exactly where you clicked — */
         this.latched = true;
         this.anchor = tip.copy();
+
+        // Play Sound
+        this.sfx.grassGrabSnd.play();
+        this.sfx.grassGrabSnd.rate(4);
 
         const full = this.p.dist(tip.x, tip.y, this.pos.x, this.pos.y);
         this.ropeLen = this.p.constrain(full - this.r, MIN_LEN, MAX_LEN);
         break;
       }
+    }
+    if (tip.x >= viewport.WORLD.w - this.getRightGutter() - EDGE_TOL) {
+      this.sfx.stoneGrabSnd.play();
+      this.sfx.stoneGrabSnd.rate(4);
     }
   }
 
@@ -334,6 +364,7 @@ export class Player {
   collideRect(rect) {
     if (rect.hHit <= 0) return; // no hitbox, skip
     const p = this.p;
+
     const cx = p.constrain(this.pos.x, rect.x, rect.x + rect.w);
     const cy = p.constrain(this.pos.y, rect.y, rect.y + rect.hHit);
     const delta = p.createVector(this.pos.x - cx, this.pos.y - cy);

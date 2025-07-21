@@ -43,13 +43,16 @@ export default class Background {
     const PAR = 0.3; // parallax factor for the whole sky strip
     const imgH = this.sky.height; // height of one gradient tile
 
+    const scroll = Math.round(camY * PAR);
+    const offset = ((-scroll % imgH) + imgH) % imgH;
+
     /* ── 1.  TILE THE GRADIENT ─────────────────────────── */
     // Find the first tile’s Y so the strip scrolls at PAR but repeats every imgH.
     let firstY = (-camY * PAR) % imgH;
     if (firstY > 0) firstY -= imgH; // shift upward so we start off-screen
 
-    for (let y = firstY - imgH; y < p.height + imgH; y += imgH) {
-      p.image(this.sky, 0, y);
+    for (let y = -offset; y < p.height + imgH; y += imgH) {
+      p.image(this.sky, 0, Math.round(y), this.sky.width, imgH + 1);
     }
 
     /* ── 2.  CLOUDS ───────────────────────────────────── */

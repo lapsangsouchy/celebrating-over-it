@@ -547,7 +547,7 @@ new p5((p) => {
     level.addPlatform(384, -448, 64, 32, 32, false, 'tinyGrass');
     level.addPlatform(320, -448, 64, 32, 32, false, 'tinyGrass');
     level.addPlatform(192, -576, 64, 32, 64, false, 'tinyGrass');
-    level.addPlatform(192, -768, 64, 32, 32, false, 'tinyGrass');
+    level.addPlatform(128, -768, 64, 32, 32, false, 'tinyGrass');
 
     // Stone Wall with grass patches 1
     level.addPlatform(320, -960, 64, 64, 64, false, 'stoneBlock');
@@ -556,82 +556,63 @@ new p5((p) => {
     level.addPlatform(320, -1152, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(320, -896, 32, 16, 16, false, 'grassySurfaceT');
     level.addPlatform(320, -896, 32, 16, 16, false, 'grassySurfaceTR');
-    level.addPlatform(576, -768, 64, 32, 32, false, 'tinyGrass');
+    level.addPlatform(576, -768, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(512, -1024, 64, 32, 32, false, 'tinyGrass');
     level.addPlatform(384, -1152, 16, 32, 32, false, 'grassySurfaceL');
 
     // Stone Separator -> onto fail state #2
-    level.addPlatform(128, -1152, 64, 32, 64, false, 'tinyGrass');
+    level.addPlatform(192, -1152, 64, 32, 64, false, 'tinyGrass');
 
+    level.addPlatform(0, -1344, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(0, -1408, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(0, -1472, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(0, -1536, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(0, -1600, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(0, -1664, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(0, -1728, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(0, -1792, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(192, -1344, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(192, -1408, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(192, -1472, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(192, -1536, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(384, -1344, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(384, -1408, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(384, -1472, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(384, -1536, 64, 64, 64, false, 'stoneBlock');
-
-    level.addPlatform(320, -1344, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(320, -1312, 16, 32, 32, false, 'grassySurfaceR');
-    level.addPlatform(320, -1376, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(320, -1408, 16, 32, 32, false, 'grassySurfaceR');
-    level.addPlatform(320, -1472, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(320, -1440, 16, 32, 32, false, 'grassySurfaceR');
-    level.addPlatform(320, -1504, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(320, -1536, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(256, -1536, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(256, -1504, 16, 32, 32, false, 'grassySurfaceL');
-    level.addPlatform(256, -1440, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(256, -1472, 16, 32, 32, false, 'grassySurfaceL');
-    level.addPlatform(256, -1408, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(256, -1376, 16, 32, 32, false, 'grassySurfaceL');
-    level.addPlatform(256, -1312, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(256, -1344, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(384, -1600, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(384, -1664, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(384, -1728, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(384, -1792, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(192, -1792, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1600, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(192, -1664, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(192, -1728, 64, 64, 64, false, 'stoneBlock');
-    level.addPlatform(192, -1600, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(192, -1792, 64, 64, 64, false, 'stoneBlock');
 
-    level.addPlatform(320, -1568, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1312, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1344, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1376, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1408, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1440, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1472, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1504, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1536, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1568, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1600, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1632, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1664, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1696, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1728, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1760, 16, 32, 32, false, 'grassySurfaceR');
+    level.addPlatform(128, -1792, 16, 32, 32, false, 'grassySurfaceR');
 
-    level.addPlatform(320, -1600, 16, 32, 32, false, 'grassySurfaceR');
-    level.addPlatform(320, -1664, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(320, -1632, 16, 32, 32, false, 'grassySurfaceR');
-    level.addPlatform(320, -1696, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(320, -1728, 16, 32, 32, false, 'grassySurfaceR');
-    level.addPlatform(320, -1792, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(320, -1760, 16, 32, 32, false, 'grassySurfaceR');
-
-    level.addPlatform(256, -1760, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(256, -1792, 16, 32, 32, false, 'grassySurfaceL');
-    level.addPlatform(256, -1728, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(256, -1696, 16, 32, 32, false, 'grassySurfaceL');
-    level.addPlatform(256, -1632, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(256, -1664, 16, 32, 32, false, 'grassySurfaceL');
-    level.addPlatform(256, -1600, 16, 32, 32, false, 'grassySurfaceL');
-
-    level.addPlatform(256, -1568, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1312, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1344, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1376, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1408, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1440, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1472, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1504, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1536, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1568, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1600, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1632, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1664, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1696, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1728, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1760, 16, 32, 32, false, 'grassySurfaceL');
+    level.addPlatform(64, -1792, 16, 32, 32, false, 'grassySurfaceL');
 
     level.addPlatform(576, -2000, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(512, -2000, 64, 64, 64, false, 'stoneBlock');

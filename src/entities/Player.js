@@ -315,6 +315,13 @@ export class Player {
       this.level.platforms.forEach((r) => this.collideRect(r));
 
       this.collideWall(); // prevent going into the right gutter
+
+      if (this.pos.x < this.r) {
+        this.pos.x = this.r;
+        if (this.vel.x < 0) {
+          this.vel.x = 0;
+        }
+      }
     }
 
     // remove radial velocity so you don't ping off axis

@@ -7,22 +7,22 @@ export const FAIL_STATES = [
     checkpointY: 0, // stand here first…
     topBoundY: -192, // …then climb above this OR
     bottomBoundY: 256, //    fall below this to trigger
-    targetLen: 162, // final length
-    stepLen: (162 - 120) / 3, // arm pixel increase every fall
-    unlock: (player) => player.unlockLongArm(162),
+    targetLen: 176, // final length
+    stepLen: (176 - 120) / 3, // arm pixel increase every fall
+    unlock: (player) => player.unlockLongArm(176),
     toastStep: 'ARM_STEP',
     toastUnlock: 'ARM_UNLOCK',
   },
   {
     // 1 ► Movement+Jump   (todo)
     name: 'swingWall',
-    checkpointY: -832,
+    checkpointY: -768,
     topBoundY: -1088,
-    bottomBoundY: -256,
-    targetLen: 201,
-    stepLen: (201 - 162) / 3,
+    bottomBoundY: -512,
+    targetLen: 216,
+    stepLen: (216 - 176) / 3,
     unlock: (player) => {
-      player.unlockLongArm(201);
+      player.unlockLongArm(216);
     },
     toastStep: 'ARM_STEP',
     toastUnlock: 'ARM_UNLOCK',

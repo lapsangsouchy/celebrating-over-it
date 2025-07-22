@@ -35,6 +35,25 @@ import * as viewport from '../ui/viewport.js';
 /* ---------- Start of p5.js Implementation --------------------------- */
 
 new p5((p) => {
+  // ── fullscreen toggle globals ────────────────────────
+  let fsBtn, fsTooltip;
+  const FS_BTN_SIZE = 32;
+  const FS_ICON = '⛶'; // enter fullscreen
+  const EXIT_FS_ICON = '🗗'; // exit fullscreen
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  function updateFullscreenButton() {
+    // swap icon
+    fsBtn.html(document.fullscreenElement ? EXIT_FS_ICON : FS_ICON);
+  }
+  /* ---------- States ------------------- */
   const STATE_INTRO = 'intro'; // selfie?
   const STATE_CAM = 'webcam'; // live preview & capture
   const STATE_REVIEW = 'review'; // show round selfie Yes / Retake
@@ -42,6 +61,19 @@ new p5((p) => {
   const STATE_PLAY = 'playing'; // normal gameplay
 
   let gameState = STATE_INTRO;
+
+  /* ---------- User Interface Screens ------------------ */
+  let ui = {
+    introYes: null,
+    introSkip: null,
+    camCapture: null,
+    reviewTxt: null,
+    reviewYes: null,
+    reviewRetry: null,
+    namePrompt: null,
+    nameInput: null,
+    nameStart: null,
+  };
 
   /* ---------- One-time tutorial ------------------------------------ */
   const TUT_KEY = 'advTutSeen'; // localStorage flag
@@ -56,12 +88,13 @@ new p5((p) => {
 
   // transient pop-ups (fail-states, upgrades, etc.)
   let storyPopup = { txt: '', alpha: 0 }; // alpha==0 → idle
+
   /* game objects */
   let player, camera, level;
 
   let playerName = 'You'; // default player name
 
-  /*layout variables */
+  /* level layout variables */
   let playW;
   let rightGutter;
   let cliffG;
@@ -230,21 +263,21 @@ new p5((p) => {
 
     /* ----- intro buttons ---------------------------------------- */
     if (gameState === STATE_INTRO) {
-      const btnYes = p.createButton('Add my face 😊');
-      const btnSkip = p.createButton('Skip for now');
+      ui.introYes = p.createButton('Add my face 😊');
+      ui.introSkip = p.createButton('Skip for now');
 
-      styleBtn(btnYes, 0);
-      styleBtn(btnSkip, 1); // helper for CSS ↓↓↓
+      styleBtn(ui.introYes, 0);
+      styleBtn(ui.introSkip, 1); // helper for CSS ↓↓↓
 
-      btnYes.mousePressed(() => {
-        btnYes.hide();
-        btnSkip.hide();
+      ui.introYes.mousePressed(() => {
+        ui.introYes.hide();
+        ui.introSkip.hide();
         startWebcam();
       });
 
-      btnSkip.mousePressed(() => {
-        btnYes.remove();
-        btnSkip.remove();
+      ui.introSkip.mousePressed(() => {
+        ui.introYes.remove();
+        ui.introSkip.remove();
         gotoNameScreen(); // skip to name screen
         // gameState = STATE_PLAY; // straight into the game
       });
@@ -299,6 +332,66 @@ new p5((p) => {
     // console.log(sfx);
 
     volCtrl.setVolume(0.5); // default volume
+
+    // ── Full-screen toggle ──────────────────────────────
+    fsBtn = p.createButton(FS_ICON);
+    fsBtn.size(FS_BTN_SIZE, FS_BTN_SIZE);
+    fsBtn.style('background', 'transparent');
+    fsBtn.style('border', 'none');
+    fsBtn.style('font-size', '24px');
+    fsBtn.style('cursor', 'pointer');
+    fsBtn.style('color', '#fff');
+    // bottom-right (16px margin)
+    fsBtn.position(p.width - 16 - FS_BTN_SIZE, p.height - 16 - FS_BTN_SIZE);
+    fsBtn.style('position', 'absolute');
+    fsBtn.style('z-index', '1000'); // on top of everything
+
+    // custom tooltip div (hidden by default)
+    fsTooltip = p.createDiv('Full Screen').elt;
+    Object.assign(fsTooltip.style, {
+      position: 'absolute',
+      background: 'rgba(0,0,0,0.7)',
+      color: 'white',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      pointerEvents: 'none',
+      visibility: 'hidden',
+    });
+    document.body.appendChild(fsTooltip);
+
+    // wire up click + hover
+    // fsBtn.mousePressed(toggleFullscreen);
+    fsBtn.elt.addEventListener('mouseover', () => {
+      const label = document.fullscreenElement
+        ? 'Exit Full Screen'
+        : 'Full Screen';
+      fsTooltip.textContent = label;
+      const btnR = fsBtn.elt.getBoundingClientRect();
+      // force layout so we can read its height
+      fsTooltip.style.visibility = 'hidden';
+      fsTooltip.style.display = 'block';
+      const ttH = fsTooltip.getBoundingClientRect().height;
+      fsTooltip.style.left = `${btnR.left}px`;
+      fsTooltip.style.top = `${btnR.top - ttH - 4}px`;
+      fsTooltip.style.display = '';
+      fsTooltip.style.visibility = 'visible';
+    });
+    fsBtn.elt.addEventListener('mouseout', () => {
+      fsTooltip.style.visibility = 'hidden';
+    });
+
+    // keep icon in sync if user presses ESC or exits with browser controls
+    document.addEventListener('fullscreenchange', () => {
+      updateFullscreenButton();
+      // if tooltip showing, update its text too
+      if (fsTooltip.style.visibility === 'visible') {
+        fsTooltip.textContent = document.fullscreenElement
+          ? 'Exit Full Screen'
+          : 'Full Screen';
+      }
+    });
   };
 
   p.draw = () => {
@@ -325,6 +418,19 @@ new p5((p) => {
         p.image(faceSnap, p.width / 2, p.height / 2);
       }
       return; // skip gameplay
+    }
+
+    if (gameState === STATE_NAME) {
+      p.background('#130022');
+      p.imageMode(p.CENTER);
+      if (!faceSnap) {
+        // p.background('#130022');
+        p.fill(100, 150, 255);
+        p.circle(p.width / 2, p.height / 2, 128);
+      } else {
+        p.image(faceSnap, p.width / 2, p.height / 2);
+      }
+      return;
     }
 
     if (gameState === STATE_PLAY) {
@@ -500,9 +606,9 @@ new p5((p) => {
 
   /* ---------- input/handlers ---------- */
   p.mousePressed = () => {
+    const v = viewport.screenToWorld(p.mouseX, p.mouseY);
     if (Debug.brush) {
       // screen → world
-      const v = viewport.screenToWorld(p.mouseX, p.mouseY);
       const world = { x: v.x, y: v.y + camera.camY };
       // snap to grid
       world.x = Math.round(world.x / Debug.snap) * Debug.snap;
@@ -510,9 +616,13 @@ new p5((p) => {
       brushStart = world;
       return;
     }
-    player.tryLatch();
+    if (v.x < playW + 100) {
+      player.tryLatch();
+      return;
+    }
     p.userStartAudio();
     volCtrl.mousePressed(p.mouseX, p.mouseY); // check volume control
+    fsBtn.mousePressed(toggleFullscreen);
   };
 
   p.mouseDragged = () => {
@@ -563,7 +673,37 @@ new p5((p) => {
 
     volCtrl.x = p.width - 16 - volCtrl.size;
     volCtrl.y = 16;
+
+    repositionUI(); // reposition UI elements
+
+    fsBtn.position(p.width - 16 - FS_BTN_SIZE, p.height - 16 - FS_BTN_SIZE);
   };
+
+  function repositionUI() {
+    switch (gameState) {
+      case STATE_INTRO:
+        if (ui.introYes) styleBtn(ui.introYes, 0);
+        if (ui.introSkip) styleBtn(ui.introSkip, 1);
+        break;
+      case STATE_CAM:
+        if (ui.camCapture) styleBtn(ui.camCapture, 4);
+        break;
+      case STATE_REVIEW:
+        if (ui.reviewTxt)
+          ui.reviewTxt.position(p.width / 2 - 90, p.height / 2 - 150);
+        if (ui.reviewYes) styleBtn(ui.reviewYes, 3);
+        if (ui.reviewRetry) styleBtn(ui.reviewRetry, 4);
+        break;
+      case STATE_NAME:
+        if (ui.namePrompt)
+          ui.namePrompt.position(p.width / 2 - 120, p.height / 2 - 150);
+        if (ui.nameInput)
+          ui.nameInput.position(p.width / 2 - 84, p.height / 2 + 150);
+        if (ui.nameStart)
+          ui.nameStart.position(p.width / 2 - 45, p.height / 2 + 200);
+        break;
+    }
+  }
 
   /* ---------- helper functions ---------- */
 
@@ -694,14 +834,14 @@ new p5((p) => {
     cam.hide();
 
     // capture button
-    const btnShot = p.createButton('Capture');
-    styleBtn(btnShot, 4);
-    btnShot.mousePressed(() => {
+    ui.camCapture = p.createButton('Capture');
+    styleBtn(ui.camCapture, 4);
+    ui.camCapture.mousePressed(() => {
       grabFace();
 
       cam.stop(); // stop stream
       // cam = null;
-      btnShot.remove();
+      ui.camCapture.remove();
       showReviewScreen();
     });
   }
@@ -731,21 +871,21 @@ new p5((p) => {
   function showReviewScreen() {
     gameState = STATE_REVIEW;
 
-    const txt = p.createDiv('Does this look good?');
-    const okBtn = p.createButton('Yes!');
-    const noBtn = p.createButton("Let's try that again");
+    ui.reviewTxt = p.createDiv('Does this look good?');
+    ui.reviewYes = p.createButton('Yes!');
+    ui.reviewRetry = p.createButton("Let's try that again");
 
-    txt
+    ui.reviewTxt
       .style('font-family', 'monospace', 'white')
       .style('color', 'white')
       .position(p.width / 2 - 90, p.height / 2 - 150);
-    styleBtn(okBtn, 3);
-    styleBtn(noBtn, 4);
+    styleBtn(ui.reviewYes, 3);
+    styleBtn(ui.reviewRetry, 4);
 
-    okBtn.mousePressed(() => {
-      okBtn.remove();
-      noBtn.remove();
-      txt.remove();
+    ui.reviewYes.mousePressed(() => {
+      ui.reviewYes.remove();
+      ui.reviewRetry.remove();
+      ui.reviewTxt.remove();
       player.setFace(faceSnap);
       if (faceSnap) {
         // const dataURL = faceSnap.canvas.toDataURL('image/png');
@@ -755,14 +895,14 @@ new p5((p) => {
       gotoNameScreen();
     });
 
-    noBtn.mousePressed(() => {
+    ui.reviewRetry.mousePressed(() => {
       faceSnap = null;
       camReady = false;
       cam.remove(); // stop webcam
       cam = null;
-      okBtn.remove();
-      noBtn.remove();
-      txt.remove();
+      ui.reviewYes.remove();
+      ui.reviewRetry.remove();
+      ui.reviewTxt.remove();
       startWebcam(); // reopen live preview
     });
   }
@@ -771,31 +911,25 @@ new p5((p) => {
   function gotoNameScreen() {
     gameState = STATE_NAME;
 
-    if (!faceSnap) {
-      p.background('#130022');
-      p.imageMode(p.CENTER);
-      p.fill(100, 150, 255);
-      p.circle(p.width / 2, p.height / 2, 128);
-    }
+    ui.namePrompt = p.createDiv('Adventurer, what is your name?');
+    ui.nameInput = p.createInput('');
+    ui.nameStart = p.createButton("Let's begin!");
 
-    const prompt = p.createDiv('Adventurer, what is your name?');
-    const input = p.createInput('');
-    const ok = p.createButton('Start!');
-
-    prompt
+    ui.namePrompt
       .style('font-family', 'monospace')
       .style('color', 'white')
+      .style('width', '240px')
       .position(p.width / 2 - 120, p.height / 2 - 150);
-    input.position(p.width / 2 - 80, p.height / 2 + 150).size(160, 32);
-    ok.position(p.width / 2 - 30, p.height / 2 + 200);
+    ui.nameInput.position(p.width / 2 - 84, p.height / 2 + 150).size(160, 32);
+    ui.nameStart.position(p.width / 2 - 45, p.height / 2 + 200).size(90, 32);
 
-    ok.mousePressed(() => {
-      const name = input.value().trim() || 'you';
+    ui.nameStart.mousePressed(() => {
+      const name = ui.nameInput.value().trim() || 'you';
       playerName = name;
       // localStorage.setItem('advName', name);
-      prompt.remove();
-      input.remove();
-      ok.remove();
+      ui.namePrompt.remove();
+      ui.nameInput.remove();
+      ui.nameStart.remove();
       p.imageMode(p.CORNER); // reset image mode
 
       /* ---------- Tutorial start ---------- */

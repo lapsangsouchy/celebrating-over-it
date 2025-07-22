@@ -13,7 +13,7 @@ export function buildCliffStone(
   const taperW = taperImg.width * scale; //  8→32
   const taperH = taperImg.height * scale;
 
-  const cliffH = 4096; // tall enough for any climb
+  const cliffH = 3136; // tall enough for any climb
   const g = p5.createGraphics(rightGutter, cliffH);
   g.noSmooth();
   g.background(bg); // shows through taper’s alpha

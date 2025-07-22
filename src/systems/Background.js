@@ -11,7 +11,7 @@ export default class Background {
     this.p = p;
 
     /* --------- 1. PAINT ONE LOOPABLE GRADIENT STRIP --------- */
-    const STRIP_H = 2048; // fixed, GPU-friendly
+    const STRIP_H = 3000; // fixed, GPU-friendly
     this.sky = p.createGraphics(worldW, STRIP_H);
 
     for (let y = 0; y < STRIP_H; y++) {
@@ -40,7 +40,7 @@ export default class Background {
   /** Draw at current camera origin (camX, camY) in world coordinates */
   draw(camX, camY) {
     const p = this.p;
-    const PAR = 0.3; // parallax factor for the whole sky strip
+    const PAR = 0.4; // parallax factor for the whole sky strip
     const imgH = this.sky.height; // height of one gradient tile
 
     const scroll = Math.round(camY * PAR);

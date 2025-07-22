@@ -2,7 +2,7 @@
 /* Each object = one upgrade in story order. */
 export const FAIL_STATES = [
   {
-    // 0 ► Long Arm
+    // Fail-State 1 - The First Hurdle
     name: 'longArm',
     checkpointY: 0, // stand here first…
     topBoundY: -192, // …then climb above this OR
@@ -14,7 +14,7 @@ export const FAIL_STATES = [
     toastUnlock: 'ARM_UNLOCK',
   },
   {
-    // 1 ► Movement+Jump   (todo)
+    // Fail-State 2 - Rope Swing
     name: 'swingWall',
     checkpointY: -768,
     topBoundY: -1088,
@@ -28,15 +28,18 @@ export const FAIL_STATES = [
     toastUnlock: 'ARM_UNLOCK',
   },
   {
-    // // 2 ► Attack          (todo)
-    // name: 'attackUpgrade',
-    // checkpointY: -1600,
-    // topBoundY: -1856,
-    // bottomBoundY: -1344,
-    // message: (playerName) => 'TODO: Alex can now smash obstacles!',
-    // unlock: (player) => {
-    //   /* add later */
-    // },
+    // Fail-State 3 - Push Up the Wall
+    name: 'wallPush',
+    checkpointY: -2048,
+    topBoundY: -2264,
+    bottomBoundY: -1856,
+    targetLen: 300,
+    stepLen: (300 - 216) / 3,
+    unlock: (player) => {
+      player.unlockLongArm(300);
+    },
+    toastStep: 'ARM_STEP',
+    toastUnlock: 'ARM_UNLOCK',
   },
 ];
 

@@ -7,9 +7,9 @@ export const FAIL_STATES = [
     checkpointY: 0, // stand here first…
     topBoundY: -192, // …then climb above this OR
     bottomBoundY: 256, //    fall below this to trigger
-    targetLen: 176, // final length
-    stepLen: (176 - 120) / 3, // arm pixel increase every fall
-    unlock: (player) => player.unlockLongArm(176),
+    targetLen: 174, // final length
+    stepLen: (174 - 120) / 3, // arm pixel increase every fall
+    unlock: (player) => player.unlockLongArm(174),
     toastStep: 'ARM_STEP',
     toastUnlock: 'ARM_UNLOCK',
   },
@@ -20,7 +20,7 @@ export const FAIL_STATES = [
     topBoundY: -1088,
     bottomBoundY: -512,
     targetLen: 216,
-    stepLen: (216 - 176) / 3,
+    stepLen: (216 - 174) / 3,
     unlock: (player) => {
       player.unlockLongArm(216);
     },

@@ -102,6 +102,7 @@ new p5((p) => {
     grassLandSnd: null,
     stoneLandSnd: null,
     armGrowSnd: null,
+    armGrowSpecialSnd: null,
   };
   // let grassGrabSnd, stoneGrabSnd, grassLandSnd, stoneLandSnd;
   let volCtrl;
@@ -129,6 +130,9 @@ new p5((p) => {
     );
     sfx.armGrowSnd = p.loadSound(
       new URL('../assets/sfx/powerUp7.ogg', import.meta.url).href
+    );
+    sfx.armGrowSpecialSnd = p.loadSound(
+      new URL('../assets/sfx/powerUp9.ogg', import.meta.url).href
     );
   };
 
@@ -289,6 +293,7 @@ new p5((p) => {
       sfx.grassLandSnd,
       sfx.stoneLandSnd,
       sfx.armGrowSnd,
+      sfx.armGrowSpecialSnd,
     ]);
 
     // console.log(sfx);
@@ -303,7 +308,9 @@ new p5((p) => {
 
     if (gameState === STATE_CAM && camReady) {
       // center the live video feed with a faint circle “face window”
-      p.image(cam, p.width / 2 - 160, p.height / 2 - 120); // 320×240
+      p.imageMode(p.CORNER);
+      p.image(cam, p.width / 2 - cam.width / 2, p.height / 2 - cam.height / 2);
+
       p.noFill();
       p.stroke(255);
       p.strokeWeight(2);
@@ -313,6 +320,7 @@ new p5((p) => {
 
     if (gameState === STATE_REVIEW) {
       if (faceSnap) {
+        p.background('#130022');
         p.imageMode(p.CENTER);
         p.image(faceSnap, p.width / 2, p.height / 2);
       }
@@ -328,7 +336,7 @@ new p5((p) => {
 
       camera.update();
 
-      const SKY_START_Y = 400;
+      const SKY_START_Y = 700;
       if (camera.camY < SKY_START_Y) {
         bg.draw(0, camera.camY);
       }
@@ -432,7 +440,7 @@ new p5((p) => {
           // If player finds a way to climb above the checkpoint without long-arm
           if (player.maxLen !== fs.targetLen) {
             player.unlockLongArm(fs.targetLen);
-            sfx.armGrowSnd.play();
+            sfx.armGrowSpecialSnd.play();
             story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
             failIndex++;
             checkpointHit = false; // reset for next fail-state
@@ -674,10 +682,15 @@ new p5((p) => {
   function startWebcam() {
     gameState = STATE_CAM;
 
-    cam = p.createCapture(p.VIDEO, () => {
-      camReady = true;
-    });
-    cam.size(320, 240);
+    if (!cam) {
+      cam = p.createCapture(p.VIDEO, { flipped: true }, () => {
+        camReady = true;
+      });
+    } else {
+      cam.play();
+      // camReady = true; // webcam already open
+    }
+
     cam.hide();
 
     // capture button
@@ -686,7 +699,8 @@ new p5((p) => {
     btnShot.mousePressed(() => {
       grabFace();
 
-      cam.remove(); // stop stream
+      cam.stop(); // stop stream
+      // cam = null;
       btnShot.remove();
       showReviewScreen();
     });
@@ -737,10 +751,15 @@ new p5((p) => {
         // const dataURL = faceSnap.canvas.toDataURL('image/png');
         // localStorage.setItem('advFace', dataURL);
       }
+      cam.remove(); // stop webcam
       gotoNameScreen();
     });
 
     noBtn.mousePressed(() => {
+      faceSnap = null;
+      camReady = false;
+      cam.remove(); // stop webcam
+      cam = null;
       okBtn.remove();
       noBtn.remove();
       txt.remove();
@@ -751,6 +770,13 @@ new p5((p) => {
   /* ---  Name Screen --- */
   function gotoNameScreen() {
     gameState = STATE_NAME;
+
+    if (!faceSnap) {
+      p.background('#130022');
+      p.imageMode(p.CENTER);
+      p.fill(100, 150, 255);
+      p.circle(p.width / 2, p.height / 2, 128);
+    }
 
     const prompt = p.createDiv('Adventurer, what is your name?');
     const input = p.createInput('');

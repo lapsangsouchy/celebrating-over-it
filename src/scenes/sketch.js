@@ -1042,6 +1042,7 @@ new p5((p) => {
 
   /* ---------- Webcam Screen ---------- */
   function startWebcam() {
+    p.background('#130022');
     gameState = STATE_CAM;
 
     if (!cam) {

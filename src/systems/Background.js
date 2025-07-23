@@ -11,7 +11,7 @@ export default class Background {
     this.p = p;
 
     /* --------- 1. PAINT ONE LOOPABLE GRADIENT STRIP --------- */
-    const STRIP_H = 3000; // fixed, GPU-friendly
+    const STRIP_H = 4000; // fixed, GPU-friendly
     this.sky = p.createGraphics(worldW, STRIP_H);
 
     for (let y = 0; y < STRIP_H; y++) {
@@ -40,19 +40,19 @@ export default class Background {
   /** Draw at current camera origin (camX, camY) in world coordinates */
   draw(camX, camY) {
     const p = this.p;
-    const PAR = 0.4; // parallax factor for the whole sky strip
-    const imgH = this.sky.height; // height of one gradient tile
+    const PAR = 0.4;
+    const imgH = this.sky.height;
+    const viewH = p.height;
 
-    const scroll = Math.round(camY * PAR);
-    const offset = ((-scroll % imgH) + imgH) % imgH;
+    // 1) Pure continuous scroll (no modulo)
+    const scroll = camY * PAR;
 
-    /* ── 1.  TILE THE GRADIENT ─────────────────────────── */
-    // Find the first tile’s Y so the strip scrolls at PAR but repeats every imgH.
-    let firstY = (-camY * PAR) % imgH;
-    if (firstY > 0) firstY -= imgH; // shift upward so we start off-screen
+    // 2) Figure out the very first strip’s Y
+    const startY = -scroll - imgH; // shift up one strip to guarantee coverage
 
-    for (let y = -offset; y < p.height + imgH; y += imgH) {
-      p.image(this.sky, 0, Math.round(y), this.sky.width, imgH + 1);
+    // 3) Tile until you’re off the bottom
+    for (let y = startY; y < viewH + imgH; y += imgH) {
+      p.image(this.sky, 0, Math.round(y), this.worldW, imgH + 0.99999999);
     }
 
     /* ── 2.  CLOUDS ───────────────────────────────────── */

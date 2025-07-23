@@ -26,7 +26,7 @@ export class Camera {
   /* call at top of draw(): push & translate world */
   begin() {
     this.p.push();
-    this.p.translate(0, -this.camY);
+    this.p.translate(0, -Math.round(this.camY));
   }
 
   /* call after world draw, before UI: pop back */

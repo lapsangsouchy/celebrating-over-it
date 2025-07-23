@@ -921,10 +921,13 @@ new p5((p) => {
     level.addPlatform(384, -1152, 16, 32, 32, false, 'grassySurfaceL');
 
     // Fail-State #3
-    level.addPlatform(320, -1408, 32, 16, 16, false, 'grassySurfaceTR');
-    level.addPlatform(320, -1408, 32, 16, 16, false, 'grassySurfaceT');
+    level.addPlatform(320, -1344, 32, 16, 16, false, 'grassySurfaceT');
+    level.addPlatform(320, -1344, 32, 16, 16, false, 'grassySurfaceTR');
+    // level.addPlatform(320, -1408, 32, 16, 16, false, 'grassySurfaceTR');
+    // level.addPlatform(320, -1408, 32, 16, 16, false, 'grassySurfaceT');
     level.addPlatform(576, -1408, 64, 32, 32, false, 'tinyGrass');
-    level.addPlatform(320, -1472, 64, 64, 64, false, 'stoneBlock');
+    // level.addPlatform(320, -1472, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -1408, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(320, -1536, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(384, -1536, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(64, -1600, 64, 64, 64, false, 'stoneBlock');
@@ -948,6 +951,7 @@ new p5((p) => {
     level.addPlatform(384, -2048, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(384, -2112, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(384, -2176, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(384, -2240, 64, 64, 64, false, 'stoneBlock');
 
     level.addPlatform(384, -1984, 32, 16, 16, false, 'grassySurfaceT');
 

@@ -202,7 +202,7 @@ export function drawArmLenHUD(p, player, camera) {
   p.noStroke();
   p.fill('#7b00ffff');
   p.text(
-    `ARM: ${player.maxLen} / ${needRounded}`,
+    `ARM: \n Current Length: ${player.ropeLen} \n Max Length: ${player.maxLen} \n Length to Mouse: ${needRounded}`,
     10,
     60 // x,y in SCREEN space
   );

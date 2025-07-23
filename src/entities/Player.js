@@ -1,7 +1,6 @@
 import { GRAVITY, FRICTION, MIN_LEN, MAX_LEN } from '../core/config.js';
 import * as viewport from '../ui/viewport.js';
 import { EDGE_TOL, CLIFF_W } from '../core/config.js';
-import { projectToEdge, nearestEdgePoint } from '../systems/Level.js';
 
 const STIFFNESS = 0.25; // 0 → jelly, 1 → instant lock
 
@@ -281,8 +280,23 @@ export class Player {
 
       // 2) once unfrozen, allow rope‐length adjust on drag
       if (p.mouseIsPressed) {
-        const raw = p.dist(mw.x, mw.y, this.anchor.x, this.anchor.y) - this.r;
-        const targetLen = p.constrain(raw, MIN_LEN, this.maxLen);
+        const INPUT_SENSITIVITY = 0.4;
+
+        // 1) raw distance from anchor → pointer
+        const dx = mw.x - this.anchor.x;
+        const dy = mw.y - this.anchor.y; // positive = downward drag
+        const rawDist = Math.hypot(dx, dy) - this.r;
+
+        let targetLen;
+        if (dy > 0) {
+          // only apply “joystick” when dragging down
+          const inputRadius = this.maxLen * INPUT_SENSITIVITY;
+          const norm = this.p.constrain(rawDist / inputRadius, 0, 1);
+          targetLen = norm * this.maxLen;
+        } else {
+          // all other directions are normal
+          targetLen = this.p.constrain(rawDist, MIN_LEN, this.maxLen);
+        }
         this.ropeLen += (targetLen - this.ropeLen) * 0.25;
       }
 

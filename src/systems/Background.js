@@ -45,7 +45,7 @@ export default class Background {
     const viewH = p.height;
 
     // 1) Pure continuous scroll (no modulo)
-    const scroll = camY * PAR;
+    const scroll = Math.max(camY, 0) * PAR;
 
     // 2) Figure out the very first strip’s Y
     const startY = -scroll - imgH; // shift up one strip to guarantee coverage

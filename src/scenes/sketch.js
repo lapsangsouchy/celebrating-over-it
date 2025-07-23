@@ -425,7 +425,7 @@ new p5((p) => {
   };
 
   p.draw = () => {
-    if (gameState === STATE_INTRO || gameState === STATE_CAM) {
+    if (gameState === STATE_INTRO) {
       p.background('#130022');
 
       const titleSize = Math.min(p.width, p.height) * 0.08;

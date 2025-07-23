@@ -702,7 +702,10 @@ new p5((p) => {
                     window.playAgainBtn = null;
                     // reset state
                     resetGame(); // defined lower in sketch.js
-                    endingTriggered = false; // allow replay
+                    endingTriggered = null; // allow replay
+                    cutsceneX = 576;
+                    cutsceneY = -3200; // reset cutscene position
+                    cutsceneTimer = 0; // reset timer
                     tutorial.active = false; // skip tutorial
                     // re-center camera, reset arm
                     camera.reset();

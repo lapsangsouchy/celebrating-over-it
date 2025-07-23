@@ -66,7 +66,7 @@ export class Story {
     if (!endingTriggered) {
       this.p.text(this.txt, this.p.width / 4, player.pos.y + off);
     } else {
-      this.p.text(this.txt, this.p.width / 3.5, player.pos.y + off + 100);
+      this.p.text(this.txt, player.pos.x, player.pos.y + off + 100);
     }
     this.p.pop();
 

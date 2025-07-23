@@ -156,6 +156,9 @@ new p5((p) => {
     cutsceneM3,
     cutsceneM4 = false; // cutscene messages
 
+  /* ---------- Title Font ------------ */
+  let titleFont;
+
   /* ---------- p5.js preload ---------- */
 
   p.preload = () => {
@@ -175,6 +178,7 @@ new p5((p) => {
       sfx.armGrowSpecialSnd = p.loadSound('assets/sfx/powerUp9.ogg');
 
       itemSprite = p.loadImage('assets/asc-logo.png');
+      titleFont = p.loadFont('assets/PressStart2P-Regular.ttf');
     } else {
       console.log('local');
       atlas = p.loadImage('assets/tilemap.png');
@@ -182,16 +186,15 @@ new p5((p) => {
       endMusic = p.loadSound('assets/MapleSyrupFactory.mp3');
 
       // SFX
-      sfx.grassGrabSnd = p.loadSound('/assets/sfx/grassLand.ogg');
-      sfx.stoneGrabSnd = p.loadSound('/assets/sfx/stonesHit1.ogg');
-      sfx.grassLandSnd = p.loadSound('/assets/sfx/grassLand.ogg');
-      sfx.stoneLandSnd = p.loadSound('/assets/sfx/stoneHit5.ogg');
-      sfx.armGrowSnd = p.loadSound('/assets/sfx/powerUp7.ogg');
-      sfx.armGrowSpecialSnd = p.loadSound('/assets/sfx/powerUp9.ogg');
+      sfx.grassGrabSnd = p.loadSound('assets/sfx/grassLand.ogg');
+      sfx.stoneGrabSnd = p.loadSound('assets/sfx/stonesHit1.ogg');
+      sfx.grassLandSnd = p.loadSound('assets/sfx/grassLand.ogg');
+      sfx.stoneLandSnd = p.loadSound('assets/sfx/stoneHit5.ogg');
+      sfx.armGrowSnd = p.loadSound('assets/sfx/powerUp7.ogg');
+      sfx.armGrowSpecialSnd = p.loadSound('assets/sfx/powerUp9.ogg');
 
-      itemSprite = p.loadImage(
-        'https://lapsangsouchy.github.io/celebrating-over-it/assets/asc-logo.png'
-      );
+      itemSprite = p.loadImage('assets/asc-logo.png');
+      titleFont = p.loadFont('assets/PressStart2P-Regular.ttf');
     }
   };
 
@@ -424,9 +427,33 @@ new p5((p) => {
   p.draw = () => {
     if (gameState === STATE_INTRO || gameState === STATE_CAM) {
       p.background('#130022');
+
+      const titleSize = Math.min(p.width, p.height) * 0.08;
+      const titleFloat = Math.sin(p.frameCount * 0.05) * 8;
+      p.push();
+      p.textFont('monospace'); // or load a pixel font in preload
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textFont(titleFont);
+      p.textSize(titleSize);
+      // outline
+      // p.stroke('#FFD700');
+      p.strokeWeight(8);
+      // fill
+      p.fill('#FFFFFF');
+
+      p.text(
+        'Celebrating\n' + 'Over It',
+        p.width / 2,
+        p.height * 0.25 + titleFloat
+      );
+      p.pop();
+
+      // 3) draw your two intro buttons underneath
+      return; // skip all the other states
     }
 
     if (gameState === STATE_CAM && camReady) {
+      p.background('#130022');
       // center the live video feed with a faint circle “face window”
       p.imageMode(p.CORNER);
       p.image(cam, p.width / 2 - cam.width / 2, p.height / 2 - cam.height / 2);
@@ -712,7 +739,6 @@ new p5((p) => {
                   });
                 }
               }
-              // create the button once
             }
           }
         }
@@ -808,10 +834,12 @@ new p5((p) => {
 
   p.windowResized = () => {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
-    viewport.update(); // update viewport
-    calcLayout();
-    bg = new Background(WORLD_H, viewport.WORLD.w, p); // rebuild to new width
-    level.playW = playW; // update spacing helper
+    if (gameState === STATE_PLAY) {
+      viewport.update(); // update viewport
+      calcLayout();
+      bg = new Background(WORLD_H, viewport.WORLD.w, p); // rebuild to new width
+      level.playW = playW; // update spacing helper
+    }
 
     volCtrl.x = p.width - 16 - volCtrl.size;
     volCtrl.y = 16;

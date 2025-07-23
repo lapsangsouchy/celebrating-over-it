@@ -92,7 +92,7 @@ new p5((p) => {
   /* game objects */
   let player, camera, level;
 
-  let playerName = 'You'; // default player name
+  let playerName = 'The Adventurer'; // default player name
 
   /* level layout variables */
   let playW;
@@ -128,6 +128,7 @@ new p5((p) => {
 
   /* ----------- Music ------------------ */
   let bgMusic;
+  let endMusic;
   /* ----------- SFX -------------------- */
   let sfx = {
     grassGrabSnd: null,
@@ -144,6 +145,17 @@ new p5((p) => {
   let itemSprite;
   let sparkles = [];
 
+  // ── Cutscene state & config ─────────────────────
+  let endingTriggered = false;
+  let cutsceneX = 576;
+  let cutsceneY = -3200; // starting Y of the item
+  let cutsceneTimer = 0;
+  let cutsceneStartMs = 0;
+  let cutsceneM1,
+    cutsceneM2,
+    cutsceneM3,
+    cutsceneM4 = false; // cutscene messages
+
   /* ---------- p5.js preload ---------- */
 
   p.preload = () => {
@@ -152,6 +164,7 @@ new p5((p) => {
       console.log('prod');
       atlas = p.loadImage('assets/tilemap.png');
       bgMusic = p.loadSound('assets/OverTheClover.m4a');
+      endMusic = p.loadSound('assets/MapleSyrupFactory.mp3');
 
       // SFX
       sfx.grassGrabSnd = p.loadSound('assets/sfx/grassLand.ogg');
@@ -166,6 +179,7 @@ new p5((p) => {
       console.log('local');
       atlas = p.loadImage('assets/tilemap.png');
       bgMusic = p.loadSound('assets/OverTheClover.m4a');
+      endMusic = p.loadSound('assets/MapleSyrupFactory.mp3');
 
       // SFX
       sfx.grassGrabSnd = p.loadSound('/assets/sfx/grassLand.ogg');
@@ -333,6 +347,7 @@ new p5((p) => {
 
     volCtrl = new VolumeControl(p, iconX, iconY, [
       bgMusic,
+      endMusic,
       sfx.grassGrabSnd,
       sfx.stoneGrabSnd,
       sfx.grassLandSnd,
@@ -452,7 +467,9 @@ new p5((p) => {
 
       viewport.begin(p); // scale and center
 
-      camera.update();
+      if (!endingTriggered || cutsceneTimer < 28) {
+        camera.update();
+      }
 
       const SKY_START_Y = 700;
       if (camera.camY < SKY_START_Y) {
@@ -465,6 +482,15 @@ new p5((p) => {
       const firstY =
         p.floor((camera.camY - viewport.WORLD.h) / cliffG.height) *
         cliffG.height;
+
+      if (!endingTriggered) {
+        const dx = player.pos.x - 576;
+        const dy = player.pos.y - cutsceneY; /* = -3200 */
+        const dist = Math.hypot(dx, dy);
+        if (dist < player.r + 32) {
+          triggerEnding();
+        }
+      }
 
       drawEndingItem();
 
@@ -518,7 +544,7 @@ new p5((p) => {
       }
 
       level.draw();
-      player.update();
+      player.update(endingTriggered);
 
       updateTutorial(); // update tutorial state
       updateStory(); // update story markers
@@ -571,7 +597,7 @@ new p5((p) => {
       }
 
       /* ---------- UI toast ---------- */
-      story.draw(player);
+      story.draw(player, endingTriggered);
 
       player.draw();
 
@@ -591,11 +617,106 @@ new p5((p) => {
       }
       debugOverlay(); // show / hide the Reset-Cookies button
 
-      if (!bgMusic.isPlaying()) {
+      if (!bgMusic.isPlaying() && !endingTriggered) {
         bgMusic.setVolume(volCtrl.volume);
         bgMusic.loop(); // loop background music
       }
       volCtrl.draw();
+
+      if (endingTriggered) {
+        if (!endMusic.isPlaying()) {
+          // endMusic.setVolume(volCtrl.volume);
+          endMusic.play();
+          endMusic.jump(40);
+        }
+        // computing elapsed time in seconds
+        cutsceneTimer = (p.millis() - cutsceneStartMs) / 1000;
+
+        if (cutsceneTimer < 2) {
+          cutsceneY += (5 * p.deltaTime) / 1000;
+        } else if (cutsceneTimer < 3) {
+          cutsceneY -= (10 * p.deltaTime) / 1000;
+        } else if (cutsceneTimer < 5) {
+          // Move player to the center of the screen by the end of this cutsceneTimer check
+          let tNorm = (cutsceneTimer - 3) / 2;
+          tNorm = p.constrain(tNorm, 0, 1); // clamp to [0, 1]
+          cutsceneX = p.lerp(576, viewport.WORLD.w / 2, tNorm);
+          const bob = Math.sin(p.frameCount * 0.05) * 1.5;
+          cutsceneY += bob;
+        } else if (cutsceneTimer < 7) {
+          cutsceneY += (5 * p.deltaTime) / 1000;
+        } else if (cutsceneTimer < 28) {
+          cutsceneY -= 5;
+          if (cutsceneTimer >= 7 && !cutsceneM1) {
+            story.queue(COPY.M.END_ONE(playerName));
+            cutsceneM1 = true;
+          }
+          if (cutsceneTimer >= 12 && !cutsceneM2) {
+            story.queue(COPY.M.END_TWO(playerName));
+            cutsceneM2 = true;
+          }
+          if (cutsceneTimer >= 17 && !cutsceneM3) {
+            story.queue(COPY.M.END_THREE(playerName));
+            cutsceneM3 = true;
+          }
+          if (cutsceneTimer >= 22 && !cutsceneM4) {
+            story.queue(COPY.M.END_FOUR(playerName));
+            cutsceneM4 = true;
+          }
+        } else {
+          const t = cutsceneTimer - 31;
+          cutsceneY -= 20;
+          if (t > 0) {
+            const alpha = p.constrain((t / 2) * 255, 0, 255);
+            p.push();
+            p.fill(255, alpha);
+            p.noStroke();
+            p.rect(0, 0, p.width, p.height);
+            p.pop();
+
+            if (alpha === 255) {
+              let titleAlpha = p.constrain(((t - 2) / 2) * 255, 0, 255);
+              // draw title
+              if (titleAlpha > 0) {
+                p.push();
+                p.textAlign(p.CENTER, p.CENTER);
+                p.textSize(48);
+                p.fill(0, titleAlpha);
+                p.text('Celebrating Over It', p.width / 2, p.height / 2 - 40);
+                p.pop();
+              }
+
+              if (cutsceneTimer >= 36) {
+                if (!window.playAgainBtn) {
+                  window.playAgainBtn = p.createButton('Play Again?');
+                  window.playAgainBtn.position(
+                    p.width / 2 - 60,
+                    p.height / 2 + 20
+                  );
+                  window.playAgainBtn.size(120, 32);
+                  window.playAgainBtn.style('font-family', 'monospace');
+                  window.playAgainBtn.mousePressed(() => {
+                    endMusic.stop(); // stop the music
+                    // remove overlay
+                    window.playAgainBtn.remove();
+                    window.playAgainBtn = null;
+                    // reset state
+                    resetGame(); // defined lower in sketch.js
+                    endingTriggered = false; // allow replay
+                    tutorial.active = false; // skip tutorial
+                    // re-center camera, reset arm
+                    camera.reset();
+                  });
+                }
+              }
+              // create the button once
+            }
+          }
+        }
+        // console.log(cutsceneTimer);
+        player.pos.set(cutsceneX, cutsceneY);
+        // console.log(cutsceneTimer);
+      }
     }
   };
 
@@ -632,7 +753,7 @@ new p5((p) => {
       brushStart = world;
       return;
     }
-    if (v.x < playW + 100) {
+    if (v.x < playW + 100 && !endingTriggered) {
       player.tryLatch();
       return;
     }
@@ -674,8 +795,10 @@ new p5((p) => {
       brushStart = null;
       return;
     }
-    player.release();
     volCtrl.mouseReleased();
+    if (endingTriggered) return;
+
+    player.release();
   };
 
   /* ---------- window resize ---------- */
@@ -992,7 +1115,7 @@ new p5((p) => {
     ui.nameStart.position(p.width / 2 - 45, p.height / 2 + 200).size(90, 32);
 
     ui.nameStart.mousePressed(() => {
-      const name = ui.nameInput.value().trim() || 'you';
+      const name = ui.nameInput.value().trim() || 'The Adventurer';
       playerName = name;
       // localStorage.setItem('advName', name);
       ui.namePrompt.remove();
@@ -1041,7 +1164,7 @@ new p5((p) => {
     }
     // STEP-2 ▸ fade out, then finish
     else if (tutorial.step === 2) {
-      tutorial.alpha -= 0.5; // fade-out
+      tutorial.alpha -= 1; // fade-out
       if (tutorial.alpha <= 0) {
         tutorial.active = false;
         // localStorage.setItem(TUT_KEY, '1'); // never show again
@@ -1105,11 +1228,14 @@ new p5((p) => {
   /* ---------- Ending Item Helper ---------- */
   function drawEndingItem() {
     // bob up/down
-    const floatAmt = Math.sin(p.frameCount * 0.05) * 8;
+    const floatAmt = endingTriggered ? 0 : Math.sin(p.frameCount * 0.05) * 8;
 
     p.push();
     p.imageMode(p.CENTER);
-    p.translate(576, -3200 + floatAmt);
+    p.translate(
+      endingTriggered ? cutsceneX : 576,
+      (endingTriggered ? cutsceneY : -3200) + floatAmt
+    );
     p.image(itemSprite, 0, 0, 64, 64);
 
     // spawn a sparkle every few frames
@@ -1140,7 +1266,7 @@ new p5((p) => {
   /* ---------- debug stuff ---------- */
   p.keyPressed = (e) => {
     if (p.keyCode === p.ESCAPE) resetGame();
-    handleDebugKeyPress(e, player);
+    handleDebugKeyPress(e, player, endingTriggered);
     // --- cycle brush kinds with [ and ] ---------------------------------
     if (Debug.active && Debug.brush && brushKinds.length) {
       if (e.key === ']') {
@@ -1166,4 +1292,11 @@ new p5((p) => {
       }
     }
   };
+  function triggerEnding() {
+    endingTriggered = true;
+    cutsceneStartMs = p.millis();
+    cutsceneTimer = 0;
+    bgMusic.stop(); // halt the soundtrack
+    player.release(); // drop any latch & disable arm
+  }
 });

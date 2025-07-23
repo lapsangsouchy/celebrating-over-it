@@ -43,7 +43,7 @@ export const FAIL_STATES = [
   },
 ];
 
-export const MSG_TIME_FRAMES = 600; // 4-second toast
+export const MSG_TIME_FRAMES = 300; // 4-second toast
 
 export const TILE_SIZE = 16; // world pixels per tile
 export const SCALE = 4; // world pixels per screen pixel

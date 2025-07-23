@@ -28,7 +28,7 @@ export const Debug = {
 // HOT‑KEY HANDLER (call from keyPressed())
 //--------------------------------------------------------------
 
-export function handleDebugKeyPress(e, player) {
+export function handleDebugKeyPress(e, player, endingTriggered) {
   switch (e.key) {
     case '`': // back‑tick toggles master flag
       Debug.active = !Debug.active;
@@ -59,6 +59,11 @@ export function handleDebugKeyPress(e, player) {
       if (Debug.active) Debug.showBoxes = !Debug.showBoxes;
       console.log('Show boxes:', Debug.showBoxes ? 'ON' : 'OFF');
       break;
+    case 't':
+    case 'T':
+      if (Debug.active) {
+        player.pos.set(448, -3200);
+      }
     case '1':
       if (Debug.active) Debug.physics.gravity = !Debug.physics.gravity;
       break;

@@ -11,7 +11,7 @@ export default class Background {
     this.p = p;
 
     /* --------- 1. PAINT ONE LOOPABLE GRADIENT STRIP --------- */
-    const STRIP_H = 4000; // fixed, GPU-friendly
+    const STRIP_H = 3000; // fixed, GPU-friendly
     this.sky = p.createGraphics(worldW, STRIP_H);
 
     for (let y = 0; y < STRIP_H; y++) {
@@ -45,7 +45,7 @@ export default class Background {
     const viewH = p.height;
 
     // 1) Pure continuous scroll (no modulo)
-    const scroll = Math.max(camY, 0) * PAR;
+    const scroll = Math.abs(camY) * PAR;
 
     // 2) Figure out the very first strip’s Y
     const startY = -scroll - imgH; // shift up one strip to guarantee coverage

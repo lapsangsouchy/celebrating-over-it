@@ -25,6 +25,10 @@ export const COPY = {
     M_CANT: (n) => `Until there was a place ${n} couldn't reach…`,
     M_PUSH: (n) => `${n} felt like they could make it further than before.`,
     M_PEAK: (n) => `Clouds parted; the summit still loomed.`,
+    END_ONE: (n) => `And after many trials,\n` + `${n} reached for the stars!`,
+    END_TWO: (n) => `Even though the climb was difficult...`,
+    END_THREE: (n) => `Every fall and every failure`,
+    END_FOUR: (n) => `Allowed ${n} to grow\n` + 'and reach even further.',
   },
 
   // fail-state / power-up blurbs
@@ -46,19 +50,24 @@ export class Story {
     this.txt = txt;
     this.timer = frames;
   }
-  draw(player) {
+  draw(player, endingTriggered) {
     if (this.timer <= 0) return; // nothing? nothing.
     const a = 255 * (this.timer / MSG_TIME_FRAMES);
 
     const off = player.r + 20; // little below the sprite
     this.p.push();
+    this.p.imageMode(this.p.CENTER);
     this.p.textAlign(this.p.CENTER, this.p.TOP);
     this.p.textFont('monospace');
     this.p.textSize(18);
     this.p.fill(255, a);
     this.p.stroke(0, a);
     this.p.strokeWeight(4);
-    this.p.text(this.txt, this.p.width / 3, player.pos.y + off);
+    if (!endingTriggered) {
+      this.p.text(this.txt, this.p.width / 4, player.pos.y + off);
+    } else {
+      this.p.text(this.txt, this.p.width / 3.5, player.pos.y + off + 100);
+    }
     this.p.pop();
 
     this.timer--;

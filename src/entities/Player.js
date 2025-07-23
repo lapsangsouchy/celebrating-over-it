@@ -247,7 +247,7 @@ export class Player {
   }
 
   /* ---------- core loop steps ---------- */
-  update() {
+  update(endingTriggered = false) {
     const p = this.p; // one‑letter alias keeps code short
     const mw = this.getMouseWorld();
 
@@ -265,6 +265,8 @@ export class Player {
     // }
 
     this.armAngle = p.atan2(mw.y - this.pos.y, mw.x - this.pos.x);
+
+    if (endingTriggered) return; // skip all physics in ending cutscene
 
     // ————————————— LATched MODE —————————————
     if (this.latched) {

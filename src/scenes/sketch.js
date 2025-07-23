@@ -147,18 +147,60 @@ new p5((p) => {
   /* ---------- p5.js preload ---------- */
 
   p.preload = () => {
-    atlas = p.loadImage('/assets/tilemap.png');
-    bgMusic = p.loadSound('/assets/OverTheClover.m4a');
+    // Check if in prod or dev mode via localhost
+    if (!window.location.hostname.includes('localhost')) {
+      console.log('prod');
+      atlas = p.loadImage(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/tilemap.png'
+      );
+      bgMusic = p.loadSound(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/OverTheClover.m4a'
+      );
 
-    // SFX
-    sfx.grassGrabSnd = p.loadSound('/assets/sfx/grassLand.ogg');
-    sfx.stoneGrabSnd = p.loadSound('/assets/sfx/stonesHit1.ogg');
-    sfx.grassLandSnd = p.loadSound('/assets/sfx/grassLand.ogg');
-    sfx.stoneLandSnd = p.loadSound('/assets/sfx/stoneHit5.ogg');
-    sfx.armGrowSnd = p.loadSound('/assets/sfx/powerUp7.ogg');
-    sfx.armGrowSpecialSnd = p.loadSound('/assets/sfx/powerUp9.ogg');
+      // SFX
+      sfx.grassGrabSnd = p.loadSound(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/sfx/grassLand.ogg'
+      );
+      sfx.stoneGrabSnd = p.loadSound(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/sfx/stonesHit1.ogg'
+      );
+      sfx.grassLandSnd = p.loadSound(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/sfx/grassLand.ogg'
+      );
+      sfx.stoneLandSnd = p.loadSound(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/sfx/stoneHit5.ogg'
+      );
+      sfx.armGrowSnd = p.loadSound(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/sfx/powerUp7.ogg'
+      );
+      sfx.armGrowSpecialSnd = p.loadSound(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/sfx/powerUp9.ogg'
+      );
 
-    itemSprite = p.loadImage('/assets/asc-logo.png');
+      itemSprite = p.loadImage(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/asc-logo.png'
+      );
+    } else {
+      console.log('local');
+      atlas = p.loadImage(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/tilemap.png'
+      );
+      bgMusic = p.loadSound(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/OverTheClover.m4a'
+      );
+
+      // SFX
+      sfx.grassGrabSnd = p.loadSound('/assets/sfx/grassLand.ogg');
+      sfx.stoneGrabSnd = p.loadSound('/assets/sfx/stonesHit1.ogg');
+      sfx.grassLandSnd = p.loadSound('/assets/sfx/grassLand.ogg');
+      sfx.stoneLandSnd = p.loadSound('/assets/sfx/stoneHit5.ogg');
+      sfx.armGrowSnd = p.loadSound('/assets/sfx/powerUp7.ogg');
+      sfx.armGrowSpecialSnd = p.loadSound('/assets/sfx/powerUp9.ogg');
+
+      itemSprite = p.loadImage(
+        'https://lapsangsouchy.github.io/celebrating-over-it/assets/asc-logo.png'
+      );
+    }
   };
 
   /* ---------- p5.js setup ---------- */

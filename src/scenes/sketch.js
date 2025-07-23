@@ -1096,7 +1096,7 @@ new p5((p) => {
 
     ui.reviewTxt = p.createDiv('Does this look good?');
     ui.reviewYes = p.createButton('Yes!');
-    ui.reviewRetry = p.createButton("Let's try that again");
+    ui.reviewRetry = p.createButton('Retake it!');
 
     ui.reviewTxt
       .style('font-family', 'monospace', 'white')

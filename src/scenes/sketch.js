@@ -81,10 +81,9 @@ new p5((p) => {
   let tutorial = { active: false, step: 0, alpha: 255, text: '' }; // tutorial state
 
   /* ---------- Story Layer ----------------------------------------- */
-  const STORY_MARKERS = COPY.MARKERS; // height-triggered captions
+  let story;
+  let STORY_MARKERS;
   let storySeen = new Set(); // remembers which markers are done
-
-  const story = new Story(p); // toast manager
 
   // transient pop-ups (fail-states, upgrades, etc.)
   let storyPopup = { txt: '', alpha: 0 }; // alpha==0 → idle
@@ -107,6 +106,14 @@ new p5((p) => {
   /* ---------- fail globals ---------- */
   let failIndex = 0; // index in FAIL_STATES
   let checkpointHit = false; // reached that state's platform?
+  let fails = 0;
+  let toastHintIndex = 0;
+  let totalGameFails = 0;
+  let hasCountedThisFall = false;
+
+  // Fail Tutorials
+  let failTut1, failTut2, failTut3, failTut4;
+  let failTutorials = [];
 
   /* ---------- brush globals ---------- */
   let brushStart = null; // {x,y} when you press
@@ -127,7 +134,7 @@ new p5((p) => {
   let teraSprites;
   let saggiSprites;
   let bg;
-  const WORLD_H = 40000; // however tall your climb is (px)
+  const WORLD_H = 4000; // however tall your climb is (px)
 
   /* ----------- Music ------------------ */
   let bgMusic;
@@ -185,6 +192,13 @@ new p5((p) => {
       saggiSprites = p.loadImage('assets/saggi.png');
 
       titleFont = p.loadFont('assets/PressStart2P-Regular.ttf');
+
+      // Fail Tutorial GIFs
+      failTut1 = p.loadImage('assets/fail-tuts/FailState1Tut.gif');
+      failTut2 = p.loadImage('assets/fail-tuts/FailState2Tut.gif');
+      failTut3 = p.loadImage('assets/fail-tuts/FailState3Tut.gif');
+      failTut4 = p.loadImage('assets/fail-tuts/FailState4Tut.gif');
+      failTutorials.push(failTut1, failTut2, failTut3, failTut4);
     } else {
       console.log('local');
       atlas = p.loadImage('assets/tilemap.png');
@@ -204,6 +218,13 @@ new p5((p) => {
       saggiSprites = p.loadImage('assets/saggi.png');
 
       titleFont = p.loadFont('assets/PressStart2P-Regular.ttf');
+
+      // Fail Tutorial GIFs
+      failTut1 = p.loadImage('assets/fail-tuts/FailState1Tut.gif');
+      failTut2 = p.loadImage('assets/fail-tuts/FailState2Tut.gif');
+      failTut3 = p.loadImage('assets/fail-tuts/FailState3Tut.gif');
+      failTut4 = p.loadImage('assets/fail-tuts/FailState4Tut.gif');
+      failTutorials.push(failTut1, failTut2, failTut3, failTut4);
     }
   };
 
@@ -214,6 +235,8 @@ new p5((p) => {
 
     let savedName = localStorage.getItem('advName');
     let savedFace = localStorage.getItem('advFace'); // Data URL
+    story = new Story(p, failTutorials); // toast manager
+    STORY_MARKERS = COPY.MARKERS; // height-triggered captions
 
     if (savedName) {
       // player.setFace(p.loadImage(savedFace));
@@ -297,7 +320,13 @@ new p5((p) => {
     // Place tiles into brushKinds array
     brushKinds = Object.keys(TILES);
 
-    p.createCanvas(p.windowWidth, p.windowHeight);
+    const renderer = p.createCanvas(p.windowWidth, p.windowHeight);
+
+    const ctx = renderer.elt.getContext('2d', {
+      willReadFrequently: true,
+    });
+
+    p.drawingContext = ctx;
 
     /* ----- intro buttons ---------------------------------------- */
     if (gameState === STATE_INTRO) {
@@ -597,34 +626,52 @@ new p5((p) => {
       if (failIndex < FAIL_STATES.length) {
         const fs = FAIL_STATES[failIndex];
 
-        // 1. wait until Alex stands on / below the checkpoint line
+        // 1. wait until Player stands on / below the checkpoint line
         if (!checkpointHit && player.pos.y <= fs.checkpointY) {
           checkpointHit = true;
         }
 
         if (!checkpointHit) {
+          hasCountedThisFall = false;
         } else if (player.pos.y >= fs.bottomBoundY) {
-          const newLen = Math.min(player.maxLen + fs.stepLen, fs.targetLen);
-          if (newLen > player.maxLen && !player.latched) {
-            player.gainReach(newLen - player.maxLen);
-            sfx.armGrowSnd.play();
+          if (!hasCountedThisFall && !player.latched) {
+            console.log('Story Tutorials', story.failTutorials);
+            console.log('Counted Fall?', hasCountedThisFall);
+            fails++;
+            console.log('Fails:', fails);
+            console.log('Has Target Length?', hasTargetLen(fs));
+            const newLen = Math.min(player.maxLen + fs.stepLen, fs.targetLen);
+            if (newLen > player.maxLen && !player.latched) {
+              player.gainReach(newLen - player.maxLen);
+              sfx.armGrowSnd.play();
 
-            story.queue(COPY.TOASTS[fs.toastStep](playerName));
-            checkpointHit = false; // reset for next fail-state
-          }
-          // Done? lock-in full long-arm, advance to next fail-state
-          if (newLen >= fs.targetLen) {
-            if (hasTargetLen(fs)) {
-              failIndex++; // player earned this earlier; skip it
-              checkpointHit = false;
-              return;
+              story.queue(COPY.TOASTS[fs.toastStep](playerName));
+              checkpointHit = false; // reset for next fail-state
             }
-            player.unlockLongArm(fs.targetLen);
-            sfx.armGrowSnd.play();
+            // Done? lock-in full long-arm, advance to next fail-state
+            if (newLen >= fs.targetLen) {
+              if (!hasTargetLen(fs)) {
+                player.unlockLongArm(fs.targetLen);
+                sfx.armGrowSnd.play();
 
-            story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
-            failIndex++;
-            checkpointHit = false; // reset for next fail-state
+                story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
+              }
+
+              checkpointHit = false; // reset for next fail-state
+              if (fails >= 6 && fails <= 7) {
+                story.queue(
+                  COPY.TOASTS[fs.toastHints[toastHintIndex]](playerName)
+                );
+                toastHintIndex++;
+              } else if (fails === 8) {
+                story.queue(
+                  COPY.TOASTS[fs.toastHints[toastHintIndex]](playerName)
+                );
+                story.showGuide(failIndex);
+                toastHintIndex++;
+              }
+            }
+            hasCountedThisFall = true;
           }
         } else if (player.pos.y <= fs.topBoundY) {
           // If player finds a way to climb above the checkpoint without long-arm
@@ -632,9 +679,11 @@ new p5((p) => {
             player.unlockLongArm(fs.targetLen);
             sfx.armGrowSpecialSnd.play();
             story.queue(COPY.TOASTS[fs.toastUnlock](playerName));
-            failIndex++;
-            checkpointHit = false; // reset for next fail-state
           }
+          failIndex++;
+          checkpointHit = false; // reset for next fail-state
+          fails = 0;
+          toastHintIndex = 0;
         }
       }
 
@@ -1324,7 +1373,7 @@ new p5((p) => {
   /* ---------- debug stuff ---------- */
   p.keyPressed = (e) => {
     if (p.keyCode === p.ESCAPE) resetGame();
-    handleDebugKeyPress(e, player, endingTriggered);
+    handleDebugKeyPress(e, player, fails);
     // --- cycle brush kinds with [ and ] ---------------------------------
     if (Debug.active && Debug.brush && brushKinds.length) {
       if (e.key === ']') {

@@ -12,6 +12,7 @@ export const FAIL_STATES = [
     unlock: (player) => player.unlockLongArm(174),
     toastStep: 'ARM_STEP',
     toastUnlock: 'ARM_UNLOCK',
+    toastHints: ['FAIL_HINT_1', 'FAIL_HINT_2', 'FAIL_HINT_3'],
   },
   {
     // Fail-State 2 - Rope Swing
@@ -26,6 +27,7 @@ export const FAIL_STATES = [
     },
     toastStep: 'ARM_STEP',
     toastUnlock: 'ARM_UNLOCK',
+    toastHints: ['FAIL_HINT_4', 'FAIL_HINT_5', 'FAIL_HINT_6'],
   },
   {
     // Fail-State 3 - Push Up the Wall
@@ -40,6 +42,21 @@ export const FAIL_STATES = [
     },
     toastStep: 'ARM_STEP',
     toastUnlock: 'ARM_UNLOCK',
+    toastHints: ['FAIL_HINT_7', 'FAIL_HINT_8', 'FAIL_HINT_9'],
+  },
+  {
+    name: 'finalChallenge',
+    checkpointY: -2752,
+    topBoundY: -3168,
+    bottomBoundY: -2560,
+    targetLen: 300,
+    stepLen: 0,
+    unlock: (player) => {
+      player.unlockLongArm(300);
+    },
+    toastStep: 'ARM_STEP',
+    toastUnlock: 'ARM_UNLOCK',
+    toastHints: ['FAIL_HINT_10', 'FAIL_HINT_11', 'FAIL_HINT_12'],
   },
 ];
 
@@ -59,3 +76,4 @@ export const MIN_LEN = 0; // minimum rope length
 export const MAX_LEN = 120; // maximum rope length
 export const GROUND_Y = 400; // y-coordinate of the ground
 export const HIT_GROUND = 100; // height of the ground hitbox
+export const GUIDE_FADE_FRAMES = 300; // Fade of tutorial gifs

@@ -28,7 +28,7 @@ export const Debug = {
 // HOT‑KEY HANDLER (call from keyPressed())
 //--------------------------------------------------------------
 
-export function handleDebugKeyPress(e, player, endingTriggered) {
+export function handleDebugKeyPress(e, player, fails) {
   switch (e.key) {
     case '`': // back‑tick toggles master flag
       Debug.active = !Debug.active;

@@ -23,8 +23,9 @@ export const COPY = {
   M: {
     M_START: (n) => `${n} began to get the hang of things…`,
     M_CANT: (n) => `Until there was a place ${n} couldn't reach…`,
-    M_PUSH: (n) => `${n} felt like they could make it further than before.`,
-    M_PEAK: (n) => `Clouds parted; the summit still loomed.`,
+    M_PUSH: (n) => `${n} felt like they could\n make it further than before.`,
+    M_PEAK: (n) =>
+      `${n} was growing each time they failed,\n yet the summit still loomed.`,
     END_ONE: (n) => `And after many trials,\n` + `${n} reached for the stars!`,
     END_TWO: (n) => `Even though the climb was difficult...`,
     END_THREE: (n) => `Every fall and every failure`,

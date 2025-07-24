@@ -486,7 +486,7 @@ new p5((p) => {
       p.fill('#FFFFFF');
 
       p.text(
-        'Celebrating\n' + 'Over It',
+        'A Game About\n' + 'Failing',
         p.width / 2,
         p.height * 0.25 + titleFloat
       );
@@ -774,7 +774,7 @@ new p5((p) => {
                 p.textAlign(p.CENTER, p.CENTER);
                 p.textSize(48);
                 p.fill(255, titleAlpha);
-                p.text('Celebrating Over It', p.width / 2, p.height / 2 - 150);
+                p.text('A Game About Failing', p.width / 2, p.height / 2 - 150);
                 p.pop();
               }
               if (cutsceneTimer >= 35) {
@@ -785,7 +785,7 @@ new p5((p) => {
                   p.textSize(20);
                   p.fill(255, totalFailsAlpha);
                   p.text(
-                    `You made it to the top\n after ${totalGameFails} fails!\n Woohoo!!`,
+                    `You made it to the top after ${totalGameFails} fails!\n Woohoo!!`,
                     p.width / 2,
                     p.height / 2 - 60
                   );
@@ -793,7 +793,7 @@ new p5((p) => {
                 }
               }
 
-              if (cutsceneTimer >= 40) {
+              if (cutsceneTimer >= 39) {
                 if (!window.playAgainBtn) {
                   window.playAgainBtn = p.createButton('Play Again?');
                   window.playAgainBtn.position(

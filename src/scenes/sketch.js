@@ -123,6 +123,9 @@ new p5((p) => {
   let btnResetCookies = null; // DOM button handle
   const SAVE_KEYS = ['advName', 'advFace', 'advTutSeen']; // add more later
 
+  /* --------- Background Image Assets ----------- */
+  let teraSprites;
+  let saggiSprites;
   let bg;
   const WORLD_H = 40000; // however tall your climb is (px)
 
@@ -178,6 +181,9 @@ new p5((p) => {
       sfx.armGrowSpecialSnd = p.loadSound('assets/sfx/powerUp9.ogg');
 
       itemSprite = p.loadImage('assets/asc-logo.png');
+      teraSprites = p.loadImage('assets/tera.png');
+      saggiSprites = p.loadImage('assets/saggi.png');
+
       titleFont = p.loadFont('assets/PressStart2P-Regular.ttf');
     } else {
       console.log('local');
@@ -194,6 +200,9 @@ new p5((p) => {
       sfx.armGrowSpecialSnd = p.loadSound('assets/sfx/powerUp9.ogg');
 
       itemSprite = p.loadImage('assets/asc-logo.png');
+      teraSprites = p.loadImage('assets/tera.png');
+      saggiSprites = p.loadImage('assets/saggi.png');
+
       titleFont = p.loadFont('assets/PressStart2P-Regular.ttf');
     }
   };
@@ -315,7 +324,13 @@ new p5((p) => {
     viewport.update(); // // updates scale (s) & letterbox offset
     calcLayout(); // sets playW & gutter
 
-    bg = new Background(WORLD_H, viewport.WORLD.w, p);
+    bg = new Background(
+      WORLD_H,
+      viewport.WORLD.w,
+      p,
+      teraSprites,
+      saggiSprites
+    );
 
     cliffG = buildCliffStone(
       p,
@@ -696,7 +711,7 @@ new p5((p) => {
           if (t > 0) {
             const alpha = p.constrain((t / 2) * 255, 0, 255);
             p.push();
-            p.fill(255, alpha);
+            p.fill(0, alpha);
             p.noStroke();
             p.rect(0, 0, p.width, p.height);
             p.pop();
@@ -708,7 +723,7 @@ new p5((p) => {
                 p.push();
                 p.textAlign(p.CENTER, p.CENTER);
                 p.textSize(48);
-                p.fill(0, titleAlpha);
+                p.fill(255, titleAlpha);
                 p.text('Celebrating Over It', p.width / 2, p.height / 2 - 40);
                 p.pop();
               }
@@ -837,7 +852,13 @@ new p5((p) => {
     if (gameState === STATE_PLAY) {
       viewport.update(); // update viewport
       calcLayout();
-      bg = new Background(WORLD_H, viewport.WORLD.w, p); // rebuild to new width
+      bg = new Background(
+        WORLD_H,
+        viewport.WORLD.w,
+        p,
+        teraSprites,
+        saggiSprites
+      ); // rebuild to new width
       level.playW = playW; // update spacing helper
     }
 

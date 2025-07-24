@@ -682,6 +682,7 @@ new p5((p) => {
           }
           failIndex++;
           checkpointHit = false; // reset for next fail-state
+          totalGameFails += fails;
           fails = 0;
           toastHintIndex = 0;
         }
@@ -773,11 +774,26 @@ new p5((p) => {
                 p.textAlign(p.CENTER, p.CENTER);
                 p.textSize(48);
                 p.fill(255, titleAlpha);
-                p.text('Celebrating Over It', p.width / 2, p.height / 2 - 40);
+                p.text('Celebrating Over It', p.width / 2, p.height / 2 - 150);
                 p.pop();
               }
+              if (cutsceneTimer >= 35) {
+                let totalFailsAlpha = p.constrain(((t - 2) / 2) * 255, 0, 255);
+                if (totalFailsAlpha > 0) {
+                  p.push();
+                  p.textAlign(p.CENTER, p.CENTER);
+                  p.textSize(20);
+                  p.fill(255, totalFailsAlpha);
+                  p.text(
+                    `You made it to the top\n after ${totalGameFails} fails!\n Woohoo!!`,
+                    p.width / 2,
+                    p.height / 2 - 60
+                  );
+                  p.pop();
+                }
+              }
 
-              if (cutsceneTimer >= 36) {
+              if (cutsceneTimer >= 40) {
                 if (!window.playAgainBtn) {
                   window.playAgainBtn = p.createButton('Play Again?');
                   window.playAgainBtn.position(

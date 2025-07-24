@@ -320,13 +320,7 @@ new p5((p) => {
     // Place tiles into brushKinds array
     brushKinds = Object.keys(TILES);
 
-    const renderer = p.createCanvas(p.windowWidth, p.windowHeight);
-
-    const ctx = renderer.elt.getContext('2d', {
-      willReadFrequently: true,
-    });
-
-    p.drawingContext = ctx;
+    p.createCanvas(p.windowWidth, p.windowHeight);
 
     /* ----- intro buttons ---------------------------------------- */
     if (gameState === STATE_INTRO) {

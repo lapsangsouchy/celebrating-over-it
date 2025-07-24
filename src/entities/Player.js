@@ -90,8 +90,11 @@ export class Player {
     this.totalArmLen = 120; // Base of arm from beginning of game
     this.palette = [
       p.color('#ff595e'),
+      p.color('#ff8560'), // a warmer orange-red
       p.color('#ffca3a'),
       p.color('#8ac926'),
+      p.color('#0FA958'), // a lighter, spring-green
+      p.color('#4baed9'), // a sky-blue tint
       p.color('#1982c4'),
       p.color('#6a4c93'),
     ];

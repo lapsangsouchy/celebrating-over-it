@@ -849,9 +849,9 @@ new p5((p) => {
 
   p.windowResized = () => {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
+    viewport.update(); // update viewport
+    calcLayout();
     if (gameState === STATE_PLAY) {
-      viewport.update(); // update viewport
-      calcLayout();
       bg = new Background(
         WORLD_H,
         viewport.WORLD.w,
@@ -949,6 +949,7 @@ new p5((p) => {
     level.addPlatform(576, -1408, 64, 32, 32, false, 'tinyGrass');
     // level.addPlatform(320, -1472, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(320, -1408, 64, 64, 64, false, 'stoneBlock');
+    level.addPlatform(320, -1472, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(320, -1536, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(384, -1536, 64, 64, 64, false, 'stoneBlock');
     level.addPlatform(64, -1600, 64, 64, 64, false, 'stoneBlock');

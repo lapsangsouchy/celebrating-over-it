@@ -26,6 +26,10 @@ import Background from '../systems/Background.js';
 
 import * as viewport from '../ui/viewport.js';
 
+document.addEventListener('contextmenu', (event) => {
+  event.preventDefault();
+});
+
 /* ---------- Start of p5.js Implementation --------------------------- */
 
 new p5((p) => {

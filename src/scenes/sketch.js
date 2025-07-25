@@ -5,13 +5,7 @@ import { Camera } from '../systems/Camera.js';
 import { Level } from '../systems/Level.js';
 import { TILES } from '../entities/Tiles.js';
 
-import {
-  GROUND_Y,
-  CLIFF_W,
-  MSG_TIME_FRAMES,
-  FAIL_STATES,
-  GRID_UNIT,
-} from '../core/config.js';
+import { GROUND_Y, CLIFF_W, FAIL_STATES, GRID_UNIT } from '../core/config.js';
 import { COPY, Story } from '../ui/Story.js';
 import { buildCliffStone } from '../systems/Cliff.js';
 
@@ -175,29 +169,29 @@ new p5((p) => {
     // Check if in prod or dev mode via localhost
     if (!window.location.hostname.includes('localhost')) {
       console.log('prod');
-      atlas = p.loadImage('assets/tilemap.png');
-      bgMusic = p.loadSound('assets/OverTheClover.m4a');
-      endMusic = p.loadSound('assets/MapleSyrupFactory.mp3');
+      atlas = p.loadImage('/assets/tilemap.png');
+      bgMusic = p.loadSound('/assets/OverTheClover.m4a');
+      endMusic = p.loadSound('/assets/MapleSyrupFactory.mp3');
 
       // SFX
-      sfx.grassGrabSnd = p.loadSound('assets/sfx/grassLand.ogg');
-      sfx.stoneGrabSnd = p.loadSound('assets/sfx/stonesHit1.ogg');
-      sfx.grassLandSnd = p.loadSound('assets/sfx/grassLand.ogg');
-      sfx.stoneLandSnd = p.loadSound('assets/sfx/stoneHit5.ogg');
-      sfx.armGrowSnd = p.loadSound('assets/sfx/powerUp7.ogg');
-      sfx.armGrowSpecialSnd = p.loadSound('assets/sfx/powerUp9.ogg');
+      sfx.grassGrabSnd = p.loadSound('/assets/sfx/grassLand.ogg');
+      sfx.stoneGrabSnd = p.loadSound('/assets/sfx/stonesHit1.ogg');
+      sfx.grassLandSnd = p.loadSound('/assets/sfx/grassLand.ogg');
+      sfx.stoneLandSnd = p.loadSound('/assets/sfx/stoneHit5.ogg');
+      sfx.armGrowSnd = p.loadSound('/assets/sfx/powerUp7.ogg');
+      sfx.armGrowSpecialSnd = p.loadSound('/assets/sfx/powerUp9.ogg');
 
-      itemSprite = p.loadImage('assets/asc-logo.png');
-      teraSprites = p.loadImage('assets/tera.png');
-      saggiSprites = p.loadImage('assets/saggi.png');
+      itemSprite = p.loadImage('/assets/asc-logo.png');
+      teraSprites = p.loadImage('/assets/tera.png');
+      saggiSprites = p.loadImage('/assets/saggi.png');
 
-      titleFont = p.loadFont('assets/PressStart2P-Regular.ttf');
+      titleFont = p.loadFont('/assets/PressStart2P-Regular.ttf');
 
       // Fail Tutorial GIFs
-      failTut1 = p.loadImage('assets/fail-tuts/FailState1Tut.gif');
-      failTut2 = p.loadImage('assets/fail-tuts/FailState2Tut.gif');
-      failTut3 = p.loadImage('assets/fail-tuts/FailState3Tut.gif');
-      failTut4 = p.loadImage('assets/fail-tuts/FailState4Tut.gif');
+      failTut1 = p.loadImage('/assets/fail-tuts/FailState1Tut.gif');
+      failTut2 = p.loadImage('/assets/fail-tuts/FailState2Tut.gif');
+      failTut3 = p.loadImage('/assets/fail-tuts/FailState3Tut.gif');
+      failTut4 = p.loadImage('/assets/fail-tuts/FailState4Tut.gif');
       failTutorials.push(failTut1, failTut2, failTut3, failTut4);
     } else {
       console.log('local');
